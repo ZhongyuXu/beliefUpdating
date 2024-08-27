@@ -1,0 +1,179 @@
+%%
+%% This is LaTeX2e input
+%%
+
+%%
+%% The following tells LaTeX which style we are using
+%%
+\documentclass[12pt,a4paper]{article}
+
+%%
+%% Set page layout
+%%
+\setlength{\textwidth}{16cm}
+\oddsidemargin 0cm
+\evensidemargin -1cm
+\topmargin -1cm
+\textheight 23cm
+
+\parskip=0in
+\parindent=25pt
+
+%% 
+%% Increase line spacing
+%%
+\usepackage{setspace}
+
+%%
+%% Some mathematical symbols are not included in the basic LaTeX
+%% package.  Uncommenting the following makes more commands
+%% available. 
+%%
+\usepackage{amssymb}
+
+%% 
+%% Use hyperlinks for references and URLs
+%%
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,citecolor=black,linkcolor=black,urlcolor=black}
+
+%%
+%% Packages for highlighting of text (command for highlighting: \hl)
+%%
+\usepackage{xcolor, soul}
+\sethlcolor{yellow}
+
+%%
+%% Load other packages
+%%
+\usepackage{graphicx,floatrow,enumitem,times,multicol,lipsum,lineno,titlesec,color,soul,longtable,lscape}
+
+%% 
+%% Configure captions
+%%
+\usepackage[labelfont=bf,labelsep=period,singlelinecheck=false,tableposition=top]{caption}
+
+%%
+%% Set up biblatex
+%%
+\usepackage[style=authoryear,natbib=true]{biblatex}
+\addbibresource{bibliography.bib} % or
+
+%%
+%% Change table format
+%%
+\floatsetup[table]{capposition=top}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Start of main text
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\noindent
+{\bf Title:} TITLE DOES HERE\\
+
+\noindent
+{\bf Abbreviated title:} ABBREVIATED TITLE GOES HERE \\
+\\
+\noindent 
+{\bf Authors:} AUTHOR 1$^{1}$ \& AUTHOR 2$^2$\\
+\ \\
+{\bf Affiliations:} $^1$Centre for Brain, Mind and Markets, Faculty of Business and Economics, The University of Melbourne, Parkville, Victoria 3010, Australia; $^2$AFFILIATION 2 \\
+
+\noindent
+{\bf Corresponding author:} XXX, email: XXX@unimelb.edu.au 
+
+\noindent
+{\bf Number of figures:} X 
+
+\noindent
+{\bf Number of words:} Abstract (XXX), Introduction (XXX), Discussion (XXX)
+
+\noindent
+{\bf Financial interests or conflicts of interest:} None 
+
+\noindent
+{\bf Acknowledgements:} ACKNOWLEDGEMENTS GO HERE
+
+
+\newpage
+%%
+%% Switch on line numbering
+%%
+\linenumbers
+
+% Abstract word limit: XXX
+\noindent {\bf Abstract:} % The one question is / Here we do / What we found / How it matters
+
+\newpage
+
+% Significance statement word limit: XXX
+\noindent {\bf Significance statement:} XXX
+
+\newpage
+
+% Switch to 1.5 line spacing
+\onehalfspacing
+
+% Intro word limit: XXX
+\section*{Introduction} \label{sec:intro}
+
+% Potential structure: Big problem in science/field / Narrower gap within / Yet narrower (remaining) gap / Our approach/results
+
+
+\section*{Method} \label{sec:method}
+
+% Potential structure: participants, paradigm/procedure, data analysis)
+
+% Open science practice statement (MODIFY AS NEEDED)
+\subsection{Open science practices statement}
+
+In the following sections, we present the results of a computational study followed by the results of a laboratory experiment. The code and data for the model simulations can be accessed here: [INSERT GITHUB LINK]. Prior to collecting the behavioral data, we pre-registered the study on OSF. The pre-registration included the data collection protocol and the data analysis plan ([INSERT OSF LINK]). The behavioral data and analysis code of this data is publicly available at [INSERT GITHUB LINK].
+
+\section*{Results} \label{sec:results}
+
+% Potential structure: Logic 1 (e.g., raw data), Logic 2 (e.g., processed), etc.
+
+
+\section*{Discussion} \label{sec:discussion}
+
+% Potential structure: Results -> conclusion (we found / we filled gap), limitations in filling gap, limits in generalisation, contributions beyond, science is better now -> yeah!
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Start of bibliography
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Put the bibliography here, most people will use BiBTeX in
+%% which case the environment below should be replaced with
+%% the \bibliography{} command.
+
+% \begin{thebibliography}{1}
+% \bibitem{dummy} Articles are restricted to 50 references, Letters
+% to 30.
+% \bibitem{dummyb} No compound references -- only one source per
+% reference.
+% \end{thebibliography}
+
+\newpage
+\printbibliography
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Start of figures and tables part
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+%% FIGURES
+%%
+%% If there are any figures, put them here.
+%%
+% \newpage
+% \section*{Figures} 
+
+
+%%
+%% TABLES
+%%
+%% If there are any tables, put them here.
+%%
+
+\end{document}

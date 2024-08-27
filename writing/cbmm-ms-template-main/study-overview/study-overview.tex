@@ -1,0 +1,218 @@
+% Copyright (c) 2022 by Lars Spreng
+% This work is licensed under the Creative Commons Attribution 4.0 International License. 
+% To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% You can add your packages and commands to the loadslides.tex file. 
+% The files in the folder "styles" can be modified to change the layout and design of your slides.
+% I have included examples on how to use the template below. 
+% Some of these examples are taken from the Metropolis template.
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+\documentclass[
+aspectratio=169,11pt,notheorems,hyperref={pdfauthor=whatever}
+]{beamer}
+
+\input{loadslides.tex} % Loads packages and some defined commands
+
+\title[
+% Text entered here will appear in the bottom middle
+]{Project X}
+
+\subtitle{Study overview}
+
+\author[
+% Text entered here will appear in the bottom left corner
+]{
+    John Doe 
+}
+
+\institute{
+    Centre for Brain, Mind and Markets, \\
+    The University of Melbourne}
+\date{\today}
+
+\begin{document}
+
+% Generate title page
+{
+\setbeamertemplate{footline}{} 
+\begin{frame}
+  \titlepage
+\end{frame}
+}
+\addtocounter{framenumber}{-1}
+
+% You can declare different parts as a parentof sections
+\begin{frame}{Contents}
+    \tableofcontents
+\end{frame}
+% \begin{frame}{Part II: Demo Presentation Part 2}
+%     \tableofcontents[part=2]
+% \end{frame}
+
+% \makepart{Demo Part}
+
+\section{Introduction}
+
+\subsection{Subsection}
+
+\begin{frame}
+\begin{itemize}
+    \item XXX
+\end{itemize}
+\end{frame}
+
+\section{Literature overview}
+
+\subsection{Subsection}
+
+\begin{frame}
+
+\end{frame}
+
+\section{Research questions}
+
+\subsection{Subsection}
+
+\begin{frame}
+
+\end{frame}
+
+\section{Paradigm description}
+
+\subsection{Subsection}
+
+\begin{frame}
+
+\end{frame}
+
+\section{Analysis overview}
+
+\subsection{Subsection}
+
+\begin{frame}
+
+\end{frame}
+
+\section{Parameter and model recovery analysis}
+
+\subsection{Subsection}
+
+\begin{frame}
+
+\end{frame}
+
+\section{Template features}
+
+\subsection{Items}
+\begin{frame}
+    \begin{columns}[T,onlytextwidth]
+    \column{0.33\textwidth}
+      \textbf{Items}
+      \begin{itemize}
+        \item Cats 
+        \begin{itemize}
+            \item British Shorthair
+        \end{itemize}
+        \item Dogs \item Birds
+      \end{itemize}
+
+    \column{0.33\textwidth}
+      \textbf{Enumerations}
+      \begin{enumerate}
+        \item First 
+        \begin{enumerate}
+            \item First subpoint
+        \end{enumerate}
+        \item Second \item Last
+      \end{enumerate}
+
+    \column{0.33\textwidth}
+      \textbf{Descriptions}
+      \begin{description}
+        \item[Apples] Yes \item[Oranges] No \item[Grappes] No
+      \end{description}
+\end{columns}
+\end{frame}
+
+\subsection{Table}
+\begin{frame}
+    \begin{table}
+        \caption{Largest cities in the world (source: Wikipedia)}
+        \begin{tabular}{@{} lr @{}}
+          \toprule
+          City & Population\\
+          \midrule
+          Mexico City & 20,116,842\\
+          Shanghai & 19,210,000\\
+          Peking & 15,796,450\\
+          Istanbul & 14,160,467\\
+          \bottomrule
+        \end{tabular}
+        \hspace*{1cm}
+            \setlength\extrarowheight{3pt}
+        \begin{tabular}{|lr|}
+          \hline
+          \rowcolor{primary}\color{white}City & \color{white}Population\\
+          \hline
+          Mexico City & 20,116,842\\
+          Shanghai & 19,210,000\\
+          Peking & 15,796,450\\
+          Istanbul & 14,160,467\\
+          \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+\subsection{Figures}
+\begin{frame}
+    \begin{figure}[htbp]
+        \centering
+        \caption{Plot of $y=x^2$}
+        \begin{tikzpicture}
+            \begin{axis}[
+            legend columns=3,
+            legend style={at={(0.5,-0.3)},anchor=north},
+            width = \textwidth,
+            height = 2.5in,
+            xmin = -3, 
+            xmax = 3,
+            ymin = 0,
+            ymax = 10,
+            ]
+                \addplot[primary] {x^2};
+                        \addlegendentry{$x^2$}
+            \end{axis}
+        \end{tikzpicture}
+    \end{figure}
+
+\end{frame}
+
+\subsection{Blocks}
+\begin{frame}
+
+   \centering
+	\begin{minipage}[b]{0.5\textwidth}
+
+	  \begin{block}{Default}
+        Block content.
+      \end{block}
+
+      \begin{alertblock}{Alert}
+        Block content.
+      \end{alertblock}
+
+      \begin{exampleblock}{Example}
+        Block content.
+      \end{exampleblock}      
+      
+	\end{minipage}	
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+
+\end{document}

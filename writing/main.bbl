@@ -1,0 +1,103 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/apasortcite//global/global}
+    \entry{achtzigerFastRationalResponseTimes2014}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b7db1f6bfa60baa4b6410995475c90c9}{%
+           family={Achtziger},
+           familyi={A\bibinitperiod},
+           given={Anja},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=025848417566524c37ef3e63aacba700}{%
+           family={{Alós-Ferrer}},
+           familyi={A\bibinitperiod},
+           given={Carlos},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{fullhash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{bibnamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authorbibnamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authornamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authorfullhash}{d04f4ea71db8e070c1f3724ec2481797}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{We present a simple model for decision making under uncertainty building on dual-process theories from psychology, and use it to illustrate a possible component of intuitive decision making of particular relevance for managerial settings. Decisions are the result of the interaction between two decision processes. The first one captures optimization based on Bayesian updating of beliefs. The second corresponds to a form of reinforcement learning capturing the tendency to rely on past performance. The model predicts that (i) in case of conflict between the two processes, correct responses are associated with longer response times, but (ii) if both processes are aligned, errors are slower. Further, (iii) response times in case of conflict are longer than in case of alignment. We confirm the predictions of the model in an experiment using a paradigm where an associative win-stay, lose-shift process conflicted with rational belief updating.}
+      \field{journaltitle}{Management Science}
+      \field{month}{4}
+      \field{shorttitle}{Fast or {{Rational}}?}
+      \field{title}{Fast or {{Rational}}? {{A Response-Times Study}} of {{Bayesian Updating}}}
+      \field{year}{2014}
+      \verb{doi}
+      \verb 10.1287/mnsc.2013.1793
+      \endverb
+    \endentry
+  \enddatalist
+  \datalist[entry]{nyt/global//global/global}
+    \entry{achtzigerFastRationalResponseTimes2014}{article}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b7db1f6bfa60baa4b6410995475c90c9}{%
+           family={Achtziger},
+           familyi={A\bibinitperiod},
+           given={Anja},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=025848417566524c37ef3e63aacba700}{%
+           family={{Alós-Ferrer}},
+           familyi={A\bibinitperiod},
+           given={Carlos},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{fullhash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{bibnamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authorbibnamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authornamehash}{d04f4ea71db8e070c1f3724ec2481797}
+      \strng{authorfullhash}{d04f4ea71db8e070c1f3724ec2481797}
+      \field{sortinit}{A}
+      \field{sortinithash}{2f401846e2029bad6b3ecc16d50031e2}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{abstract}{We present a simple model for decision making under uncertainty building on dual-process theories from psychology, and use it to illustrate a possible component of intuitive decision making of particular relevance for managerial settings. Decisions are the result of the interaction between two decision processes. The first one captures optimization based on Bayesian updating of beliefs. The second corresponds to a form of reinforcement learning capturing the tendency to rely on past performance. The model predicts that (i) in case of conflict between the two processes, correct responses are associated with longer response times, but (ii) if both processes are aligned, errors are slower. Further, (iii) response times in case of conflict are longer than in case of alignment. We confirm the predictions of the model in an experiment using a paradigm where an associative win-stay, lose-shift process conflicted with rational belief updating.}
+      \field{journaltitle}{Management Science}
+      \field{month}{4}
+      \field{shorttitle}{Fast or {{Rational}}?}
+      \field{title}{Fast or {{Rational}}? {{A Response-Times Study}} of {{Bayesian Updating}}}
+      \field{year}{2014}
+      \verb{doi}
+      \verb 10.1287/mnsc.2013.1793
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

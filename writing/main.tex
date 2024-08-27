@@ -1,0 +1,62 @@
+\documentclass[12pt,a4paper, man]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa}
+\addbibresource{Bib.bib}
+
+
+\usepackage{amstext}
+\usepackage{mathtools}  % amsmath with extensions
+\usepackage{amssymb}  % (otherwise \mathbb does nothing)
+\usepackage{csquotes}
+\usepackage{dcolumn}
+\usepackage{tabularx,booktabs}
+\usepackage{booktabs}
+\usepackage[nottoc]{tocbibind}
+\usepackage[margin=3 cm]{geometry}
+\usepackage{setspace}
+\usepackage[hidelinks]{hyperref}
+\usepackage{footmisc}
+\usepackage{titlesec}
+\usepackage[toc, page]{appendix}
+\usepackage{graphicx}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{mdframed}%
+\usepackage{amsfonts}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{subfig}
+
+\usepackage{biblatex}
+
+\begin{document}
+
+
+%Table of Content
+\begingroup
+\setstretch{1.5} 
+\onehalfspacing 
+\tableofcontents
+\clearpage
+\endgroup
+
+
+\begingroup
+\setlength{\parskip}{0.2\baselineskip}
+\section{Lab Research}
+\subsection{Background and Objectives}
+
+Overconfidence is a prevalent cognitive bias that impairs decision-making quality \parencite{achtzigerFastRationalResponseTimes2014}. The potential role of AI advisors in mitigating this bias in cognitive tasks remains largely unexplored. This study aims to address the following questions:
+
+
+test new
+22
+2 223
+\endgroup
+
+\printbibliography 
+
+\end{document}
