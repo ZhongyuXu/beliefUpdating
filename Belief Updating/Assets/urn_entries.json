@@ -1,0 +1,20 @@
+[
+    {
+        "urnName": "A",
+        "prior": 0.5,
+        "composition": [
+            "7B",
+            "3W"
+        ],
+        "balls": 10
+    },
+    {
+        "urnName": "B",
+        "prior": 0.5,
+        "composition": [
+            "3B",
+            "7W"
+        ],
+        "balls": 10
+    }
+]
