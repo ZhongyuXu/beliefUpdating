@@ -1,0 +1,24 @@
+{
+    "urnEntries": [
+        {
+            "urnName": "A",
+            "prior": 0.5,
+            "composition": [
+                "7B",
+                "2W",
+                "1R"
+            ],
+            "balls": 10
+        },
+        {
+            "urnName": "B",
+            "prior": 0.5,
+            "composition": [
+                "2B",
+                "1W",
+                "7R"
+            ],
+            "balls": 10
+        }
+    ]
+}

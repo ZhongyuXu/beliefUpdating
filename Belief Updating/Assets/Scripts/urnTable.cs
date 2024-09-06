@@ -5,12 +5,19 @@ using UnityEngine.UI;
 
 public class urnTable : MonoBehaviour
 {
+    [System.Serializable]
     private class UrnEntry
     {
         public string urnName;
         public float prior;
         public List<string> composition;
         public float balls;
+    }
+
+    [System.Serializable]
+    private class UrnEntryListData
+    {
+        public List<UrnEntry> urnEntries; // This matches the JSON structure
     }
 
     private Transform entryContainer;
@@ -24,26 +31,30 @@ public class urnTable : MonoBehaviour
         entryTemplate = entryContainer.Find("urnEntryTemplate");
         entryTemplate.gameObject.SetActive(false);
 
-        float templateHeight = 16.25f;
-        urnEntryList = new List<UrnEntry>()
-        {
-            new UrnEntry { 
-                urnName = "Urn A",
-                prior = 0.5f,
-                composition = new List<string> { "1B", "3W"},
-                balls = 4f,
-            },
-            new UrnEntry { 
-                urnName = "Urn B",
-                prior = 0.5f,
-                composition = new List<string> { "3B", "1W"},
-                balls = 4f,
-            }
-        };
+        // Load the JSON data from the Resources folder
+        urnEntryList = LoadUrnEntriesFromJson("urn_entries"); // Remove the .json extension when using Resources.Load
         urnEntryTransformList = new List<Transform>();
+
         foreach (UrnEntry urnEntry in urnEntryList)
         {
             CreateUrnEntryTransform(urnEntry, entryContainer, urnEntryTransformList);
+        }
+    }
+
+    private List<UrnEntry> LoadUrnEntriesFromJson(string fileName)
+    {
+        // Load the JSON file from the Resources folder
+        TextAsset jsonFile = Resources.Load<TextAsset>(fileName); // No need for .json extension
+        if (jsonFile != null)
+        {
+            // Deserialize the JSON data into UrnEntryListData (which contains a List<UrnEntry>)
+            UrnEntryListData listData = JsonUtility.FromJson<UrnEntryListData>(jsonFile.text);
+            return listData.urnEntries;
+        }
+        else
+        {
+            Debug.LogError("JSON file not found: " + fileName);
+            return new List<UrnEntry>();
         }
     }
 
