@@ -2,7 +2,7 @@
     "urnEntries": [
         {
             "urnName": "A",
-            "prior": 0.25,
+            "prior": "1/4",
             "composition": [
                 "4B",
                 "3W",
@@ -13,7 +13,7 @@
         },
         {
             "urnName": "B",
-            "prior": 0.25,
+            "prior": "1/4",
             "composition": [
                 "3B",
                 "4W",
@@ -24,7 +24,7 @@
         },
         {
             "urnName": "C",
-            "prior": 0.25,
+            "prior": "1/4",
             "composition": [
                 "2B",
                 "1W",
@@ -35,7 +35,7 @@
         },
         {
             "urnName": "D",
-            "prior": 0.25,
+            "prior": "1/4",
             "composition": [
                 "1B",
                 "2W",
@@ -43,6 +43,17 @@
                 "4G"
             ],
             "balls": 10
+        },
+        {
+            "urnName": "Total",
+            "prior": "1",
+            "composition": [
+                "10B",
+                "10W",
+                "10R",
+                "10G"
+            ],
+            "balls": 40
         }
     ]
 }

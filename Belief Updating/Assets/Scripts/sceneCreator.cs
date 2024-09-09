@@ -1,14 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 using System.IO;
-using UnityEngine.UI;
+using UnityEngine.UI; // For reading JSON files
 
-public class SceneDuplicator : MonoBehaviour
+public class DynamicSceneGenerator : MonoBehaviour
 {
-    public string templateSceneName;
-    public string jsonFileName;
+    public GameObject layoutPrefab; // Prefab for your layout
+    public string jsonFileName; // JSON file to be loaded
+
+    [System.Serializable]
+    public class SceneData
+    {
+        public List<UrnEntry> urnEntries;
+    }
 
     [System.Serializable]
     public class UrnEntry
@@ -19,44 +23,35 @@ public class SceneDuplicator : MonoBehaviour
         public float balls;
     }
 
-    [System.Serializable]
-    public class SceneData
+    private void Start()
     {
-        public List<UrnEntry> urnEntries;
-    }
-
-    void Start()
-    {
-        // Load the template scene
-        SceneManager.LoadScene(templateSceneName, LoadSceneMode.Additive);
-
-        // Wait for the scene to load and modify the content
-        StartCoroutine(LoadAndModifyScene());
-    }
-
-    IEnumerator LoadAndModifyScene()
-    {
-        yield return new WaitForSeconds(1f); // Wait for scene load
-
-        // Load JSON data
+        // Load the JSON data
         SceneData sceneData = LoadSceneData(jsonFileName);
+
+        // Generate the scene based on the JSON data
         if (sceneData != null)
         {
-            // Assuming you have layout prefabs in the scene, find them and update
             foreach (UrnEntry urnEntry in sceneData.urnEntries)
             {
-                GameObject layout = GameObject.Find("LayoutPrefab"); // Example, adjust based on your setup
-                layout.transform.Find("urnText").GetComponent<Text>().text = urnEntry.urnName;
-                layout.transform.Find("priorText").GetComponent<Text>().text = urnEntry.prior.ToString();
-                layout.transform.Find("compositionText").GetComponent<Text>().text = string.Join(", ", urnEntry.composition);
-                layout.transform.Find("totalBallsText").GetComponent<Text>().text = urnEntry.balls.ToString();
+                // Instantiate a new layout element for each entry
+                GameObject layoutInstance = Instantiate(layoutPrefab, transform);
+
+                // Set the properties of the layout (this assumes TextMeshPro fields in your prefab)
+                layoutInstance.transform.Find("urnText").GetComponent<Text>().text = urnEntry.urnName;
+                layoutInstance.transform.Find("priorText").GetComponent<Text>().text = urnEntry.prior.ToString();
+                layoutInstance.transform.Find("compositionText").GetComponent<Text>().text = string.Join(", ", urnEntry.composition);
+                layoutInstance.transform.Find("totalBallsText").GetComponent<Text>().text = urnEntry.balls.ToString();
             }
+        }
+        else
+        {
+            Debug.LogError("Failed to load scene data from JSON.");
         }
     }
 
     private SceneData LoadSceneData(string fileName)
     {
-        string filePath = Path.Combine(Application.streamingAssetsPath, fileName);
+        string filePath = Path.Combine(Application.dataPath, fileName);
         if (File.Exists(filePath))
         {
             string jsonContent = File.ReadAllText(filePath);

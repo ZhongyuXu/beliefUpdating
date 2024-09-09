@@ -9,7 +9,7 @@ public class urnTable : MonoBehaviour
     private class UrnEntry
     {
         public string urnName;
-        public float prior;
+        public string prior;
         public List<string> composition;
         public float balls;
     }
@@ -25,6 +25,8 @@ public class urnTable : MonoBehaviour
     private List<UrnEntry> urnEntryList;
     private List<Transform> urnEntryTransformList;
 
+    public string fileName; //json file name without .json extension
+
     void Start()
     {
         entryContainer = transform.Find("urnEntryContainer");
@@ -32,7 +34,7 @@ public class urnTable : MonoBehaviour
         entryTemplate.gameObject.SetActive(false);
 
         // Load the JSON data from the Resources folder
-        urnEntryList = LoadUrnEntriesFromJson("urn_entries"); // Remove the .json extension when using Resources.Load
+        urnEntryList = LoadUrnEntriesFromJson(fileName); // No need for .json extension
         urnEntryTransformList = new List<Transform>();
 
         foreach (UrnEntry urnEntry in urnEntryList)
@@ -67,7 +69,7 @@ public class urnTable : MonoBehaviour
         entryTransform.gameObject.SetActive(true);
 
         entryTransform.Find("urnText").GetComponent<Text>().text = urnEntry.urnName;
-        entryTransform.Find("priorText").GetComponent<Text>().text = urnEntry.prior.ToString();
+        entryTransform.Find("priorText").GetComponent<Text>().text = urnEntry.prior;
         entryTransform.Find("compositionText").GetComponent<Text>().text = string.Join(", ", urnEntry.composition);
         entryTransform.Find("totalBallsText").GetComponent<Text>().text = urnEntry.balls.ToString();
 

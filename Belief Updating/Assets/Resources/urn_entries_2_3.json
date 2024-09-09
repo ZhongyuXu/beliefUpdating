@@ -2,7 +2,7 @@
     "urnEntries": [
         {
             "urnName": "A",
-            "prior": 0.5,
+            "prior": "1/2",
             "composition": [
                 "7B",
                 "2W",
@@ -12,13 +12,23 @@
         },
         {
             "urnName": "B",
-            "prior": 0.5,
+            "prior": "1/2",
             "composition": [
                 "2B",
                 "1W",
                 "7R"
             ],
             "balls": 10
+        },
+        {
+            "urnName": "Total",
+            "prior": "1",
+            "composition": [
+                "9B",
+                "3W",
+                "8R"
+            ],
+            "balls": 20
         }
     ]
 }
