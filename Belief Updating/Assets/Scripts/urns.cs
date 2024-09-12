@@ -9,19 +9,19 @@ public class UrnWithStackedBalls : MonoBehaviour
     private Transform whiteTemplate;
     private Transform purpleTemplate;
     private Transform greenTemplate;
+    private Transform urnTemplate;
+    private GameObject urnPic;
     private GameObject blackBallPrefab;
     private GameObject whiteBallPrefab;
     private GameObject purpleBallPrefab;
     private GameObject greenBallPrefab;
     private List<UrnEntry> urnEntryList;
-    private List<Transform> urnEntryTransformList;
-
-    // The Sequence of this urn
-    public int urnSequence;
 
     // Ball layout settings
-    public float templateHeight = 16.25f;
-    public float templateWidth = 16.25f;
+    public float ballSpaceV = 16.25f;
+    public float ballSpaceH = 16.25f;
+    public float urnSpaceV = 0f;
+    public float urnSpaceH = 200f;
     public int maxBallsPerRow = 3;    // Maximum balls per row
 
     public string jsonFileName; // JSON file for urn data
@@ -43,39 +43,66 @@ public class UrnWithStackedBalls : MonoBehaviour
 
     private void Start() // This method is used as a Unity lifecycle method
     {
+        DefineVar();
+        // Load the JSON data from the Resources folder
+        urnEntryList = LoadUrnEntriesFromJson(jsonFileName); // No need for .json extension
+
+        CreateUrns();
+        FillWithBalls();
+    }
+
+    private void DefineVar()
+    {
         urnContainer = transform.Find("urnContainer");
+        urnTemplate = urnContainer.Find("urnTemplate");   
         ballContainer = urnContainer.Find("ballContainer");
         blackTemplate = ballContainer.Find("blackTemplate");
         whiteTemplate = ballContainer.Find("whiteTemplate");
         purpleTemplate = ballContainer.Find("purpleTemplate");
         greenTemplate = ballContainer.Find("greenTemplate");
+
+
         blackTemplate.gameObject.SetActive(false);
         whiteTemplate.gameObject.SetActive(false);
         purpleTemplate.gameObject.SetActive(false);
         greenTemplate.gameObject.SetActive(false);
+        urnTemplate.gameObject.SetActive(false);
 
         blackBallPrefab = blackTemplate.gameObject;
         whiteBallPrefab = whiteTemplate.gameObject;
         purpleBallPrefab = purpleTemplate.gameObject;
         greenBallPrefab = greenTemplate.gameObject;
+        urnPic = urnTemplate.gameObject;
 
-        // Load the JSON data from the Resources folder
-        urnEntryList = LoadUrnEntriesFromJson(jsonFileName); // No need for .json extension
-        urnEntryTransformList = new List<Transform>();
+    }
+    private void CreateUrns()
+    {
+        // Create the urns. Omit the last entry since it's not an urn. It is the total urns row
+        for (int i = 0; i < urnEntryList.Count - 1; i++)
+        {
+            // Create the urn background
+            Transform urnTransform = Instantiate(urnTemplate, urnContainer);
+            RectTransform urnRectTransform = urnTransform.GetComponent<RectTransform>();
+            urnRectTransform.anchoredPosition = new Vector3(urnSpaceH * i, urnSpaceV * i, 10);
+            urnTransform.gameObject.SetActive(true);
 
-        if (urnSequence >= 1 && urnSequence < urnEntryList.Count)
-        {
-            UrnEntry selectedUrnEntry = urnEntryList[urnSequence - 1];
-            CreateBallsInUrn(selectedUrnEntry.composition, ballContainer, urnEntryTransformList);
-        }
-        else
-        {
-            Debug.LogError("Invalid urnSequence: " + urnSequence);
         }
     }
 
+    private void FillWithBalls()
+    {
+        // Create the urns. Omit the last entry since it's not an urn. It is the total urns row
+        for (int i = 0; i < urnEntryList.Count - 1; i++)
+        {
+            // Get data for one urn (i.e. Urn A)
+            UrnEntry urnEntry = urnEntryList[i];
+
+            // Fill the urn with balls
+            CreateBallsInUrn(urnEntry.composition, ballContainer, i);
+        }
+    }
     // This function generates balls based on the composition list from the JSON
-    private void CreateBallsInUrn(List<string> composition, Transform container, List<Transform> transformList)
+    private void CreateBallsInUrn(List<string> composition, Transform container, int urnSequence)
     {
         int totalBalls = 0;
 
@@ -102,11 +129,16 @@ public class UrnWithStackedBalls : MonoBehaviour
                 int column = totalBalls % maxBallsPerRow;
                 Transform entryTransform = Instantiate(template, container);
                 RectTransform entryRectTransform = entryTransform.GetComponent<RectTransform>();
-                entryRectTransform.anchoredPosition = new Vector2(templateWidth * column, templateHeight * row);
+
+                float forwardZPosition = 0f;
+
+                entryRectTransform.anchoredPosition = new Vector3(
+                    urnSequence * urnSpaceH * 1.38f + ballSpaceH * column, 
+                    urnSequence * urnSpaceV * 1.38f + ballSpaceV * row, 
+                    forwardZPosition);
+
                 entryTransform.gameObject.SetActive(true);
-
-
-                transformList.Add(entryTransform);
+                // Write the code where the entrytransform is placed on the most forward plane of the scene
                 totalBalls++;
             }
         }
