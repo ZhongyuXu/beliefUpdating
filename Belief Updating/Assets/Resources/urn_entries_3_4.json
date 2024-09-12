@@ -6,7 +6,7 @@
             "composition": [
                 "4B",
                 "3W",
-                "2R",
+                "2P",
                 "1G"
             ],
             "balls": 10
@@ -17,7 +17,7 @@
             "composition": [
                 "3B",
                 "2W",
-                "2R",
+                "2P",
                 "3G"
             ],
             "balls": 10
@@ -28,7 +28,7 @@
             "composition": [
                 "1B",
                 "2W",
-                "3R",
+                "3P",
                 "4G"
             ],
             "balls": 10
@@ -39,7 +39,7 @@
             "composition": [
                 "8B",
                 "7W",
-                "7R",
+                "7P",
                 "8G"
             ],
             "balls": 30

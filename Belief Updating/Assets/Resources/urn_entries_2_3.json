@@ -6,7 +6,7 @@
             "composition": [
                 "7B",
                 "2W",
-                "1R"
+                "1P"
             ],
             "balls": 10
         },
@@ -16,7 +16,7 @@
             "composition": [
                 "2B",
                 "1W",
-                "7R"
+                "7P"
             ],
             "balls": 10
         },
@@ -26,7 +26,7 @@
             "composition": [
                 "9B",
                 "3W",
-                "8R"
+                "8P"
             ],
             "balls": 20
         }

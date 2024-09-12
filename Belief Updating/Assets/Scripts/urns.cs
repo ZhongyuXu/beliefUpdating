@@ -1,0 +1,159 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class UrnWithStackedBalls : MonoBehaviour
+{
+    private Transform urnContainer;
+    private Transform ballContainer;
+    private Transform blackTemplate;
+    private Transform whiteTemplate;
+    private Transform purpleTemplate;
+    private Transform greenTemplate;
+    private GameObject blackBallPrefab;
+    private GameObject whiteBallPrefab;
+    private GameObject purpleBallPrefab;
+    private GameObject greenBallPrefab;
+    private List<UrnEntry> urnEntryList;
+    private List<Transform> urnEntryTransformList;
+
+    // The Sequence of this urn
+    public int urnSequence;
+
+    // Ball layout settings
+    public float templateHeight = 16.25f;
+    public float templateWidth = 16.25f;
+    public int maxBallsPerRow = 3;    // Maximum balls per row
+
+    public string jsonFileName; // JSON file for urn data
+
+    [System.Serializable]
+    public class UrnEntry
+    {
+        public string urnName;
+        public string prior;
+        public List<string> composition;
+        public float balls;
+    }
+
+    [System.Serializable]
+    private class UrnEntryListData
+    {
+         public List<UrnEntry> urnEntries;  // This matches the JSON structure
+    }
+
+    private void Start() // This method is used as a Unity lifecycle method
+    {
+        urnContainer = transform.Find("urnContainer");
+        ballContainer = urnContainer.Find("ballContainer");
+        blackTemplate = ballContainer.Find("blackTemplate");
+        whiteTemplate = ballContainer.Find("whiteTemplate");
+        purpleTemplate = ballContainer.Find("purpleTemplate");
+        greenTemplate = ballContainer.Find("greenTemplate");
+        blackTemplate.gameObject.SetActive(false);
+        whiteTemplate.gameObject.SetActive(false);
+        purpleTemplate.gameObject.SetActive(false);
+        greenTemplate.gameObject.SetActive(false);
+
+        blackBallPrefab = blackTemplate.gameObject;
+        whiteBallPrefab = whiteTemplate.gameObject;
+        purpleBallPrefab = purpleTemplate.gameObject;
+        greenBallPrefab = greenTemplate.gameObject;
+
+        // Load the JSON data from the Resources folder
+        urnEntryList = LoadUrnEntriesFromJson(jsonFileName); // No need for .json extension
+        urnEntryTransformList = new List<Transform>();
+
+        if (urnSequence >= 1 && urnSequence < urnEntryList.Count)
+        {
+            UrnEntry selectedUrnEntry = urnEntryList[urnSequence - 1];
+            CreateBallsInUrn(selectedUrnEntry.composition, ballContainer, urnEntryTransformList);
+        }
+        else
+        {
+            Debug.LogError("Invalid urnSequence: " + urnSequence);
+        }
+    }
+
+    // This function generates balls based on the composition list from the JSON
+    private void CreateBallsInUrn(List<string> composition, Transform container, List<Transform> transformList)
+    {
+        int totalBalls = 0;
+
+        foreach (string ballEntry in composition)
+        {
+            // Parse the number of balls and the color from the entry (e.g., "3B" -> 3, "B")
+            int count = int.Parse(ballEntry[..^1]);
+            char colorCode = ballEntry[^1];
+
+            // Get the correct ball prefab based on the color code
+            GameObject ballPrefab = GetBallPrefabFromColorCode(colorCode);
+            Transform template = GetTemplateFromColorCode(colorCode);
+
+            if (ballPrefab == null)
+            {
+                Debug.LogError("Invalid color code: " + colorCode);
+                continue;
+            }
+
+            // Instantiate the specified number of balls for this color
+            for (int i = 0; i < count; i++)
+            {
+                int row = totalBalls / maxBallsPerRow;
+                int column = totalBalls % maxBallsPerRow;
+                Transform entryTransform = Instantiate(template, container);
+                RectTransform entryRectTransform = entryTransform.GetComponent<RectTransform>();
+                entryRectTransform.anchoredPosition = new Vector2(templateWidth * column, templateHeight * row);
+                entryTransform.gameObject.SetActive(true);
+
+
+                transformList.Add(entryTransform);
+                totalBalls++;
+            }
+        }
+    }
+
+    // Function to get the correct ball prefab based on color code
+    private GameObject GetBallPrefabFromColorCode(char colorCode)
+    {
+        GameObject ball = colorCode switch
+        {
+            'B' => blackBallPrefab,
+            'W' => whiteBallPrefab,
+            'P' => purpleBallPrefab,
+            'G' => greenBallPrefab,
+            _ => null,  // Add more colors if needed
+        };
+        return ball;
+    }
+
+    private Transform GetTemplateFromColorCode(char colorCode)
+    {
+        return colorCode switch
+        {
+            'B' => blackTemplate,
+            'W' => whiteTemplate,
+            'P' => purpleTemplate,
+            'G' => greenTemplate,
+            _ => null,  // Add more colors if needed
+        };
+
+    }
+
+    // Function to load JSON data (this is a placeholder, adjust it according to your project structure)
+    private List<UrnEntry> LoadUrnEntriesFromJson(string fileName)
+    {
+        // Load the JSON file from the Resources folder
+        TextAsset jsonFile = Resources.Load<TextAsset>(fileName); // No need for .json extension
+        if (jsonFile != null)
+        {
+            // Deserialize the JSON data into UrnEntryListData (which contains a List<UrnEntry>)
+            UrnEntryListData listData = JsonUtility.FromJson<UrnEntryListData>(jsonFile.text);
+            return listData.urnEntries;
+        }
+        else
+        {
+            Debug.LogError("JSON file not found: " + fileName);
+            return new List<UrnEntry>();
+        }
+    }
+}
