@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UrnWithStackedBalls : MonoBehaviour
 {
     private Transform urnContainer;
     private Transform ballContainer;
+    private Transform textContainer;
+    private Transform textTemplate;
     private Transform blackTemplate;
     private Transform whiteTemplate;
     private Transform purpleTemplate;
@@ -18,6 +21,7 @@ public class UrnWithStackedBalls : MonoBehaviour
     private List<UrnEntry> urnEntryList;
 
     // Ball layout settings
+    private float dupScale = 1.39f;
     public float ballSpaceV = 16.25f;
     public float ballSpaceH = 16.25f;
     public float urnSpaceV = 0f;
@@ -60,6 +64,8 @@ public class UrnWithStackedBalls : MonoBehaviour
         whiteTemplate = ballContainer.Find("whiteTemplate");
         purpleTemplate = ballContainer.Find("purpleTemplate");
         greenTemplate = ballContainer.Find("greenTemplate");
+        textContainer = urnContainer.Find("textContainer");
+        textTemplate = textContainer.Find("textTemplate");
 
 
         blackTemplate.gameObject.SetActive(false);
@@ -67,6 +73,7 @@ public class UrnWithStackedBalls : MonoBehaviour
         purpleTemplate.gameObject.SetActive(false);
         greenTemplate.gameObject.SetActive(false);
         urnTemplate.gameObject.SetActive(false);
+        textTemplate.gameObject.SetActive(false);
 
         blackBallPrefab = blackTemplate.gameObject;
         whiteBallPrefab = whiteTemplate.gameObject;
@@ -85,7 +92,6 @@ public class UrnWithStackedBalls : MonoBehaviour
             RectTransform urnRectTransform = urnTransform.GetComponent<RectTransform>();
             urnRectTransform.anchoredPosition = new Vector3(urnSpaceH * i, urnSpaceV * i, 10);
             urnTransform.gameObject.SetActive(true);
-
         }
     }
 
@@ -96,6 +102,13 @@ public class UrnWithStackedBalls : MonoBehaviour
         {
             // Get data for one urn (i.e. Urn A)
             UrnEntry urnEntry = urnEntryList[i];
+
+            // Create the text for the urn
+            Transform textTransform = Instantiate(textTemplate, textContainer);
+            RectTransform textRectTransform = textTransform.GetComponent<RectTransform>();
+            textRectTransform.anchoredPosition = new Vector3(urnSpaceH * i * dupScale, urnSpaceV * i * dupScale, 0);
+            textTransform.gameObject.SetActive(true);
+            textTransform.Find("urnName").GetComponent<Text>().text = urnEntry.urnName;
 
             // Fill the urn with balls
             CreateBallsInUrn(urnEntry.composition, ballContainer, i);
@@ -133,8 +146,8 @@ public class UrnWithStackedBalls : MonoBehaviour
                 float forwardZPosition = 0f;
 
                 entryRectTransform.anchoredPosition = new Vector3(
-                    urnSequence * urnSpaceH * 1.38f + ballSpaceH * column, 
-                    urnSequence * urnSpaceV * 1.38f + ballSpaceV * row, 
+                    urnSequence * urnSpaceH * dupScale + ballSpaceH * column, 
+                    urnSequence * urnSpaceV * dupScale + ballSpaceV * row, 
                     forwardZPosition);
 
                 entryTransform.gameObject.SetActive(true);
