@@ -13,7 +13,6 @@ public class UrnWithStackedBalls : MonoBehaviour
     private Transform purpleTemplate;
     private Transform greenTemplate;
     private Transform urnTemplate;
-    private GameObject urnPic;
     private GameObject blackBallPrefab;
     private GameObject whiteBallPrefab;
     private GameObject purpleBallPrefab;
@@ -79,8 +78,6 @@ public class UrnWithStackedBalls : MonoBehaviour
         whiteBallPrefab = whiteTemplate.gameObject;
         purpleBallPrefab = purpleTemplate.gameObject;
         greenBallPrefab = greenTemplate.gameObject;
-        urnPic = urnTemplate.gameObject;
-
     }
     private void CreateUrns()
     {
@@ -184,7 +181,6 @@ public class UrnWithStackedBalls : MonoBehaviour
 
     }
 
-    // Function to load JSON data (this is a placeholder, adjust it according to your project structure)
     private List<UrnEntry> LoadUrnEntriesFromJson(string fileName)
     {
         // Load the JSON file from the Resources folder

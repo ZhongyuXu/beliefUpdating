@@ -1,0 +1,994 @@
+{
+    "urnEntries": [
+        {
+            "BU1": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "W"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU2": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU3": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "9B",
+                                "3W",
+                                "8P"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "P",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU4": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "9B",
+                                "3W",
+                                "8P"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "A",
+                    "ballDraws": [
+                        "W",
+                        "W"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU5": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "5B",
+                                "5W",
+                                "5P",
+                                "5G"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "G"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU6": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/2",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/2",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "5B",
+                                "5W",
+                                "5P",
+                                "5G"
+                            ],
+                            "balls": 20
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "A",
+                    "ballDraws": [
+                        "B",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU7": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "5B",
+                                "5W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "15B",
+                                "15W"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU8": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "5B",
+                                "5W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "15B",
+                                "15W"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "A",
+                    "ballDraws": [
+                        "B",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU9": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "1B",
+                                "7W",
+                                "2P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W",
+                                "10P"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "W"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU10": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "1B",
+                                "7W",
+                                "2P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W",
+                                "10P"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "A",
+                    "ballDraws": [
+                        "B",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU11": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "3B",
+                                "2W",
+                                "2P",
+                                "3G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "8B",
+                                "7W",
+                                "7P",
+                                "8G"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "B",
+                        "P"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU12": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/3",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/3",
+                            "composition": [
+                                "3B",
+                                "2W",
+                                "2P",
+                                "3G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/3",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "8B",
+                                "7W",
+                                "7P",
+                                "8G"
+                            ],
+                            "balls": 30
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "C",
+                    "ballDraws": [
+                        "B",
+                        "P"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU13": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "6B",
+                                "4W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "4B",
+                                "6W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "20B",
+                                "20W"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "A",
+                    "ballDraws": [
+                        "B",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU14": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "7B",
+                                "3W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "6B",
+                                "4W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "4B",
+                                "6W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "7W"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "20B",
+                                "20W"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "W",
+                        "W"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU15": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "1B",
+                                "7W",
+                                "2P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "4W",
+                                "3P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "13B",
+                                "14W",
+                                "13P"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "C",
+                    "ballDraws": [
+                        "B",
+                        "P"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU16": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "7B",
+                                "2W",
+                                "1P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "1B",
+                                "7W",
+                                "2P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "7P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "4W",
+                                "3P"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "13B",
+                                "14W",
+                                "13P"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "B",
+                    "ballDraws": [
+                        "P",
+                        "B"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU17": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "4W",
+                                "1P",
+                                "2G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "4P",
+                                "3G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W",
+                                "10P",
+                                "10G"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "D",
+                    "ballDraws": [
+                        "P",
+                        "G"
+                    ]
+                }
+            ]
+        },
+        {
+            "BU18": [
+                {
+                    "urnInfo": [
+                        {
+                            "urnName": "A",
+                            "prior": "1/4",
+                            "composition": [
+                                "4B",
+                                "3W",
+                                "2P",
+                                "1G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "B",
+                            "prior": "1/4",
+                            "composition": [
+                                "3B",
+                                "4W",
+                                "1P",
+                                "2G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "C",
+                            "prior": "1/4",
+                            "composition": [
+                                "2B",
+                                "1W",
+                                "4P",
+                                "3G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "D",
+                            "prior": "1/4",
+                            "composition": [
+                                "1B",
+                                "2W",
+                                "3P",
+                                "4G"
+                            ],
+                            "balls": 10
+                        },
+                        {
+                            "urnName": "Total",
+                            "prior": "1",
+                            "composition": [
+                                "10B",
+                                "10W",
+                                "10P",
+                                "10G"
+                            ],
+                            "balls": 40
+                        }
+                    ]
+                },
+                {
+                    "chosenUrn": "D",
+                    "ballDraws": [
+                        "G",
+                        "W"
+                    ]
+                }
+            ]
+        }
+    ]
+}
