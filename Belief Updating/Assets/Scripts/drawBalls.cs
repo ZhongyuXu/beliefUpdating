@@ -1,27 +1,174 @@
+using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
+using Newtonsoft.Json;
+using UnityEngine.UI;
 
 public class drawBalls : MonoBehaviour
 {
-    public GameObject Box;
-    private void ExecuteTrigger(string trigger)
+    public string instanceName;
+    private List<string> ballDraws;
+    private int currentBallDraw = 0;
+    private Transform ballContainer;
+    private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate;
+    private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
+
+    // Ball layout settings
+    private float dupScale = 1.39f;
+    public float ballSpaceV = 16.25f;
+    public float ballSpaceH = 16.25f;
+    public int maxBallsPerRow = 4;    // Maximum balls per row
+
+    public string jsonFilePath = "Assets/Resources/input.json";
+
+    [System.Serializable]
+
+    public class UrnInfo
     {
-        if (Box != null)
+        public string urnName { get; set; }
+        public string prior { get; set; }
+        public List<string> composition { get; set; }
+        public int balls { get; set; }
+    }
+
+    public class BU
+    {
+        public List<UrnInfo> urnInfo { get; set; }
+        public string chosenUrn { get; set; }
+        public List<string> ballDraws { get; set; }
+    }
+
+    public void Start()
+    {
+        // Load the ball draws from the JSON file
+        ballDraws = LoadBUInstanceFromJson();
+        Debug.Log("instanceName: " + instanceName);
+
+        DefineVar();
+    }
+
+    public void OnClick()
+    {
+        Debug.Log("Button Clicked");
+
+        // figure out how many ball draws in this instance
+        int ballDrawsCount = ballDraws.Count;
+        
+        if (currentBallDraw < ballDrawsCount)
         {
-            var animator = Box.GetComponent<Animator>();
-            if (animator != null)
+            Debug.Log("currentBallDraw: " + currentBallDraw);
+            Debug.Log("ballDrawsCount: " + ballDrawsCount);
+            string ballDraw = ballDraws[currentBallDraw];
+            CreateBallDraws(ballDraw, ballContainer, currentBallDraw, ballDrawsCount);
+            currentBallDraw++;
+        }
+
+    }
+
+    public List<string> LoadBUInstanceFromJson()
+    {
+        // Read the JSON file content
+        string jsonString = File.ReadAllText(jsonFilePath);
+
+        // Deserialize the JSON content into a list of dictionaries
+        List<Dictionary<string, BU>> rootList = JsonConvert.DeserializeObject<List<Dictionary<string, BU>>>(jsonString);
+
+        // Find the BU instance with the specified instance name
+        foreach (var root in rootList)
+        {
+            if (root.ContainsKey(instanceName))
             {
-                animator.SetTrigger(trigger);
+                // Return the ball draws list for the specified instance
+                return root[instanceName].ballDraws;
             }
         }
+
+        // If the instance name is not found, return an empty list
+        return new List<string>();
     }
 
-    public void OnClick(){
-        ExecuteTrigger("TrDraw");
+    private void DefineVar()
+    {
+        ballContainer = transform.Find("ballDrawArea").Find("ballContainer");
+        blackTemplate = ballContainer.Find("blackTemplate");
+        whiteTemplate = ballContainer.Find("whiteTemplate");
+        purpleTemplate = ballContainer.Find("purpleTemplate");
+        greenTemplate = ballContainer.Find("greenTemplate");
+
+        blackTemplate.gameObject.SetActive(false);
+        whiteTemplate.gameObject.SetActive(false);
+        purpleTemplate.gameObject.SetActive(false);
+        greenTemplate.gameObject.SetActive(false);
+     
+        blackBallPrefab = blackTemplate.gameObject;
+        whiteBallPrefab = whiteTemplate.gameObject;
+        purpleBallPrefab = purpleTemplate.gameObject;
+        greenBallPrefab = greenTemplate.gameObject;
     }
+
+
+
+    // This function generates balls based on the composition list from the JSON
+    private void CreateBallDraws(string balldraw, Transform container, int ballDrawSequence, int ballDrawsCount)
+    {
+        // Get the correct ball prefab based on the color code
+        GameObject ballPrefab = GetBallPrefabFromColorCode(balldraw);
+        Transform template = GetTemplateFromColorCode(balldraw);
+
+        if (ballPrefab == null)
+        {
+            Debug.LogError("Invalid color code: " + balldraw);
+            return;
+        }
+
+        // Instantiate 1 balls for this color
+        int row = ballDrawSequence / maxBallsPerRow;
+        int column = ballDrawSequence % maxBallsPerRow;
+        Transform entryTransform = Instantiate(template, container);
+        RectTransform entryRectTransform = entryTransform.GetComponent<RectTransform>();
+
+        float forwardZPosition = 0f;
+
+        entryRectTransform.anchoredPosition = new Vector3(
+            ballSpaceH * column, 
+            ballSpaceV * row, 
+            forwardZPosition);
+
+        entryTransform.gameObject.SetActive(true);
+        
+    }
+
+    // Function to get the correct ball prefab based on color code
+    private GameObject GetBallPrefabFromColorCode(string colorCode)
+    {
+        GameObject ball = colorCode switch
+        {
+            "B" => blackBallPrefab,
+            "W" => whiteBallPrefab,
+            "P" => purpleBallPrefab,
+            "G" => greenBallPrefab,
+            _ => null,  // Add more colors if needed
+        };
+        return ball;
+    }
+
+    private Transform GetTemplateFromColorCode(string colorCode)
+    {
+        return colorCode switch
+        {
+            "B" => blackTemplate,
+            "W" => whiteTemplate,
+            "P" => purpleTemplate,
+            "G" => greenTemplate,
+            _ => null,  // Add more colors if needed
+        };
+
+    }
+
+
+
 
 }
-
-

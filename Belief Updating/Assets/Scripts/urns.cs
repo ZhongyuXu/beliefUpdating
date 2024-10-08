@@ -51,7 +51,7 @@ public class UrnWithStackedBalls : MonoBehaviour
         urnEntryList = LoadUrnEntriesFromJson(jsonFileName); // No need for .json extension
 
         CreateUrns();
-        FillWithBalls();
+        FillAllUrns();
     }
 
     private void DefineVar()
@@ -92,7 +92,7 @@ public class UrnWithStackedBalls : MonoBehaviour
         }
     }
 
-    private void FillWithBalls()
+    private void FillAllUrns()
     {
         // Create the urns. Omit the last entry since it's not an urn. It is the total urns row
         for (int i = 0; i < urnEntryList.Count - 1; i++)
@@ -108,11 +108,11 @@ public class UrnWithStackedBalls : MonoBehaviour
             textTransform.Find("urnName").GetComponent<Text>().text = urnEntry.urnName;
 
             // Fill the urn with balls
-            CreateBallsInUrn(urnEntry.composition, ballContainer, i);
+            CreateBallsInOneUrn(urnEntry.composition, ballContainer, i);
         }
     }
     // This function generates balls based on the composition list from the JSON
-    private void CreateBallsInUrn(List<string> composition, Transform container, int urnSequence)
+    private void CreateBallsInOneUrn(List<string> composition, Transform container, int urnSequence)
     {
         int totalBalls = 0;
 
