@@ -1,23 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
+using Newtonsoft.Json;
 
 public class UrnWithStackedBalls : MonoBehaviour
 {
-    private Transform urnContainer;
-    private Transform ballContainer;
-    private Transform textContainer;
-    private Transform textTemplate;
-    private Transform blackTemplate;
-    private Transform whiteTemplate;
-    private Transform purpleTemplate;
-    private Transform greenTemplate;
-    private Transform urnTemplate;
-    private GameObject blackBallPrefab;
-    private GameObject whiteBallPrefab;
-    private GameObject purpleBallPrefab;
-    private GameObject greenBallPrefab;
-    private List<UrnEntry> urnEntryList;
+    public string instanceName = "BU1";
+    private Transform urnContainer, ballContainer, textContainer;
+    private Transform textTemplate, blackTemplate, whiteTemplate, purpleTemplate, greenTemplate, urnTemplate;
+    private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
+    private List<UrnInfo> urnEntryList;
 
     // Ball layout settings
     private float dupScale = 1.39f;
@@ -26,29 +19,29 @@ public class UrnWithStackedBalls : MonoBehaviour
     public float urnSpaceV = 0f;
     public float urnSpaceH = 200f;
     public int maxBallsPerRow = 3;    // Maximum balls per row
-
-    public string jsonFileName; // JSON file for urn data
+    public string jsonFilePath = "Assets/Resources/input.json";
 
     [System.Serializable]
-    public class UrnEntry
+    public class UrnInfo
     {
-        public string urnName;
-        public string prior;
-        public List<string> composition;
-        public float balls;
+        public string urnName { get; set; }
+        public string prior { get; set; }
+        public List<string> composition { get; set; }
+        public int balls { get; set; }
     }
 
-    [System.Serializable]
-    private class UrnEntryListData
+    public class BU
     {
-         public List<UrnEntry> urnEntries;  // This matches the JSON structure
+        public List<UrnInfo> urnInfo { get; set; }
+        public string chosenUrn { get; set; }
+        public List<string> ballDraws { get; set; }
     }
 
     private void Start() // This method is used as a Unity lifecycle method
     {
         DefineVar();
         // Load the JSON data from the Resources folder
-        urnEntryList = LoadUrnEntriesFromJson(jsonFileName); // No need for .json extension
+        urnEntryList = LoadUrnEntriesFromJson(); // No need for .json extension
 
         CreateUrns();
         FillAllUrns();
@@ -98,7 +91,7 @@ public class UrnWithStackedBalls : MonoBehaviour
         for (int i = 0; i < urnEntryList.Count - 1; i++)
         {
             // Get data for one urn (i.e. Urn A)
-            UrnEntry urnEntry = urnEntryList[i];
+            UrnInfo urnEntry = urnEntryList[i];
 
             // Create the text for the urn
             Transform textTransform = Instantiate(textTemplate, textContainer);
@@ -181,20 +174,26 @@ public class UrnWithStackedBalls : MonoBehaviour
 
     }
 
-    private List<UrnEntry> LoadUrnEntriesFromJson(string fileName)
+    private List<UrnInfo> LoadUrnEntriesFromJson()
     {
-        // Load the JSON file from the Resources folder
-        TextAsset jsonFile = Resources.Load<TextAsset>(fileName); // No need for .json extension
-        if (jsonFile != null)
+        // Read the JSON file content
+        string jsonString = File.ReadAllText(jsonFilePath);
+
+        // Deserialize the JSON content into a list of dictionaries
+        List<Dictionary<string, BU>> rootList = JsonConvert.DeserializeObject<List<Dictionary<string, BU>>>(jsonString);
+
+        // Find the BU instance with the specified instance name
+        foreach (var root in rootList)
         {
-            // Deserialize the JSON data into UrnEntryListData (which contains a List<UrnEntry>)
-            UrnEntryListData listData = JsonUtility.FromJson<UrnEntryListData>(jsonFile.text);
-            return listData.urnEntries;
+            if (root.ContainsKey(instanceName))
+            {
+                // Return the ball draws list for the specified instance
+                return root[instanceName].urnInfo;
+            }
         }
-        else
-        {
-            Debug.LogError("JSON file not found: " + fileName);
-            return new List<UrnEntry>();
-        }
+
+        // If the instance name is not found, return an empty list and print an error message
+        Debug.LogError("Instance name not found: " + instanceName);
+        return new List<UrnInfo>();
     }
 }

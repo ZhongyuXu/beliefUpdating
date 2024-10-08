@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 public class drawBalls : MonoBehaviour
 {
-    public string instanceName;
+    public string instanceName = "BU1";
     private List<string> ballDraws;
     private int currentBallDraw = 0;
     private Transform ballContainer;
