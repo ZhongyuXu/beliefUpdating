@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 public class drawBalls : MonoBehaviour
 {
-    public string instanceName = "BU1";
+    public string instanceName;
     private List<string> ballDraws;
     private int currentBallDraw = 0;
     private Transform ballContainer;
@@ -17,12 +17,11 @@ public class drawBalls : MonoBehaviour
     private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
 
     // Ball layout settings
-    private float dupScale = 1.39f;
     public float ballSpaceV = 16.25f;
     public float ballSpaceH = 16.25f;
     public int maxBallsPerRow = 4;    // Maximum balls per row
 
-    public string jsonFilePath = "Assets/Resources/input.json";
+    private string jsonFilePath = parameters.jsonFilePath;
 
     [System.Serializable]
 
@@ -168,7 +167,10 @@ public class drawBalls : MonoBehaviour
 
     }
 
-
+    // public void SetInstanceName(string name)
+    // {
+    //     instanceName = name;
+    // }
 
 
 }

@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 public class UrnWithStackedBalls : MonoBehaviour
 {
-    public string instanceName = "BU1";
+    public string instanceName;
     private Transform urnContainer, ballContainer, textContainer;
     private Transform textTemplate, blackTemplate, whiteTemplate, purpleTemplate, greenTemplate, urnTemplate;
     private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
@@ -19,7 +19,7 @@ public class UrnWithStackedBalls : MonoBehaviour
     public float urnSpaceV = 0f;
     public float urnSpaceH = 200f;
     public int maxBallsPerRow = 3;    // Maximum balls per row
-    public string jsonFilePath = "Assets/Resources/input.json";
+    private string jsonFilePath = parameters.jsonFilePath;
 
     [System.Serializable]
     public class UrnInfo

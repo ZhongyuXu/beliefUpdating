@@ -134,7 +134,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf927c0ceb31429b99136b2d2028eb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fileName: 
+  instanceName: BU1
+  jsonFilePath: Assets/Resources/input.json
 --- !u!1 &3030203840205925593
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,7 +433,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.9607843, g: 0.9607843, b: 0.8627451, a: 1}
+  m_Color: {r: 0.9607843, g: 0.9607843, b: 0.62352943, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

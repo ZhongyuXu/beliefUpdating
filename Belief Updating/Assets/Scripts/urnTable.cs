@@ -7,12 +7,14 @@ using Newtonsoft.Json;
 
 public class urnTable : MonoBehaviour
 {
-    public string instanceName = "BU1";
+    public string instanceNameMaster = "BU1";
     private Transform entryContainer;
     private Transform entryTemplate;
     private List<UrnInfo> urnEntryList;
     private List<Transform> urnEntryTransformList;
-    public string jsonFilePath = "Assets/Resources/input.json";
+    private string jsonFilePath = parameters.jsonFilePath;
+    private drawBalls drawBalls;
+    private UrnWithStackedBalls urnWithStackedBalls;
 
     [System.Serializable]
    public class UrnInfo
@@ -31,6 +33,14 @@ public class urnTable : MonoBehaviour
     }
     void Start()
     {
+        // Initialize drawBalls instance
+        drawBalls = FindObjectOfType<drawBalls>();
+        urnWithStackedBalls = FindObjectOfType<UrnWithStackedBalls>();
+
+        // set instance name for other files
+        drawBalls.instanceName = instanceNameMaster;
+        urnWithStackedBalls.instanceName = instanceNameMaster;
+
         entryContainer = transform.Find("urnEntryContainer");
         entryTemplate = entryContainer.Find("urnEntryTemplate");
         entryTemplate.gameObject.SetActive(false);
@@ -56,15 +66,15 @@ public class urnTable : MonoBehaviour
         // Find the BU instance with the specified instance name
         foreach (var root in rootList)
         {
-            if (root.ContainsKey(instanceName))
+            if (root.ContainsKey(instanceNameMaster))
             {
                 // Return the ball draws list for the specified instance
-                return root[instanceName].urnInfo;
+                return root[instanceNameMaster].urnInfo;
             }
         }
 
         // If the instance name is not found, return an empty list and print an error message
-        Debug.LogError("Instance name not found: " + instanceName);
+        Debug.LogError("Instance name not found: " + instanceNameMaster);
         return new List<UrnInfo>();
     }
 
