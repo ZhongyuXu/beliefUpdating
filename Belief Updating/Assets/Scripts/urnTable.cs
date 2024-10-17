@@ -15,6 +15,8 @@ public class urnTable : MonoBehaviour
     private string jsonFilePath = parameters.jsonFilePath;
     private drawBalls drawBalls;
     private UrnWithStackedBalls urnWithStackedBalls;
+    private questionsUrn questionsUrn;
+    private questionsColour questionsColour;
 
     [System.Serializable]
    public class UrnInfo
@@ -36,10 +38,13 @@ public class urnTable : MonoBehaviour
         // Initialize drawBalls instance
         drawBalls = FindObjectOfType<drawBalls>();
         urnWithStackedBalls = FindObjectOfType<UrnWithStackedBalls>();
+        questionsUrn = FindObjectOfType<questionsUrn>();
+        questionsColour = FindObjectOfType<questionsColour>();
 
-        // set instance name for other files
+        questionsUrn.instanceName = instanceNameMaster;
         drawBalls.instanceName = instanceNameMaster;
         urnWithStackedBalls.instanceName = instanceNameMaster;
+        questionsColour.instanceName = instanceNameMaster;
 
         entryContainer = transform.Find("urnEntryContainer");
         entryTemplate = entryContainer.Find("urnEntryTemplate");
@@ -74,7 +79,7 @@ public class urnTable : MonoBehaviour
         }
 
         // If the instance name is not found, return an empty list and print an error message
-        Debug.LogError("Instance name not found: " + instanceNameMaster);
+        Debug.LogError("Instance name not found in the urnTable: " + instanceNameMaster);
         return new List<UrnInfo>();
     }
 

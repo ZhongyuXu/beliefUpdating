@@ -43,7 +43,7 @@ public class drawBalls : MonoBehaviour
     public void Start()
     {
         // Load the ball draws from the JSON file
-        ballDraws = LoadBUInstanceFromJson();
+        ballDraws = LoadBallDrawsFromJson();
         Debug.Log("instanceName: " + instanceName);
 
         DefineVar();
@@ -58,16 +58,14 @@ public class drawBalls : MonoBehaviour
         
         if (currentBallDraw < ballDrawsCount)
         {
-            Debug.Log("currentBallDraw: " + currentBallDraw);
-            Debug.Log("ballDrawsCount: " + ballDrawsCount);
             string ballDraw = ballDraws[currentBallDraw];
-            CreateBallDraws(ballDraw, ballContainer, currentBallDraw, ballDrawsCount);
+            CreateBallDraws(ballDraw, ballContainer, currentBallDraw);
             currentBallDraw++;
         }
 
     }
 
-    public List<string> LoadBUInstanceFromJson()
+    public List<string> LoadBallDrawsFromJson()
     {
         // Read the JSON file content
         string jsonString = File.ReadAllText(jsonFilePath);
@@ -111,7 +109,7 @@ public class drawBalls : MonoBehaviour
 
 
     // This function generates balls based on the composition list from the JSON
-    private void CreateBallDraws(string balldraw, Transform container, int ballDrawSequence, int ballDrawsCount)
+    private void CreateBallDraws(string balldraw, Transform container, int ballDrawSequence)
     {
         // Get the correct ball prefab based on the color code
         GameObject ballPrefab = GetBallPrefabFromColorCode(balldraw);
@@ -166,11 +164,5 @@ public class drawBalls : MonoBehaviour
         };
 
     }
-
-    // public void SetInstanceName(string name)
-    // {
-    //     instanceName = name;
-    // }
-
 
 }
