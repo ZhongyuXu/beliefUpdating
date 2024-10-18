@@ -11,7 +11,7 @@ public class slider : MonoBehaviour
     void Start()
     {
         _slider.onValueChanged.AddListener((v) => {
-            _sliderText.text = v.ToString("0%");
+            _sliderText.text = v.ToString() + "%";
         });
     }
 

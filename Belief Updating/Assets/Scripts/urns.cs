@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System.IO;
 using Newtonsoft.Json;
 
-public class UrnWithStackedBalls : MonoBehaviour
+public class urns : MonoBehaviour
 {
     public string instanceName;
     private Transform urnContainer, ballContainer, textContainer;
@@ -193,7 +193,7 @@ public class UrnWithStackedBalls : MonoBehaviour
         }
 
         // If the instance name is not found, return an empty list and print an error message
-        Debug.LogError("Instance name not found: " + instanceName);
+        Debug.LogError("Instance name not found in urns.cs " + instanceName);
         return new List<UrnInfo>();
     }
 }

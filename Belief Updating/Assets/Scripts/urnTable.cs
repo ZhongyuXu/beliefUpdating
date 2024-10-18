@@ -14,7 +14,7 @@ public class urnTable : MonoBehaviour
     private List<Transform> urnEntryTransformList;
     private string jsonFilePath = parameters.jsonFilePath;
     private drawBalls drawBalls;
-    private UrnWithStackedBalls urnWithStackedBalls;
+    private urns urns;
     private questionsUrn questionsUrn;
     private questionsColour questionsColour;
 
@@ -37,13 +37,13 @@ public class urnTable : MonoBehaviour
     {
         // Initialize drawBalls instance
         drawBalls = FindObjectOfType<drawBalls>();
-        urnWithStackedBalls = FindObjectOfType<UrnWithStackedBalls>();
+        urns = FindObjectOfType<urns>();
         questionsUrn = FindObjectOfType<questionsUrn>();
         questionsColour = FindObjectOfType<questionsColour>();
 
         questionsUrn.instanceName = instanceNameMaster;
         drawBalls.instanceName = instanceNameMaster;
-        urnWithStackedBalls.instanceName = instanceNameMaster;
+        urns.instanceName = instanceNameMaster;
         questionsColour.instanceName = instanceNameMaster;
 
         entryContainer = transform.Find("urnEntryContainer");
