@@ -13,10 +13,6 @@ public class urnTable : MonoBehaviour
     private List<UrnInfo> urnEntryList;
     private List<Transform> urnEntryTransformList;
     private string jsonFilePath = parameters.jsonFilePath;
-    private drawBalls drawBalls;
-    private urns urns;
-    private questionsUrn questionsUrn;
-    private questionsColour questionsColour;
 
     [System.Serializable]
    public class UrnInfo
@@ -35,17 +31,6 @@ public class urnTable : MonoBehaviour
     }
     void Start()
     {
-        // Initialize drawBalls instance
-        drawBalls = FindObjectOfType<drawBalls>();
-        urns = FindObjectOfType<urns>();
-        questionsUrn = FindObjectOfType<questionsUrn>();
-        questionsColour = FindObjectOfType<questionsColour>();
-
-        questionsUrn.instanceName = instanceNameMaster;
-        drawBalls.instanceName = instanceNameMaster;
-        urns.instanceName = instanceNameMaster;
-        questionsColour.instanceName = instanceNameMaster;
-
         entryContainer = transform.Find("urnEntryContainer");
         entryTemplate = entryContainer.Find("urnEntryTemplate");
         entryTemplate.gameObject.SetActive(false);
@@ -99,8 +84,4 @@ public class urnTable : MonoBehaviour
         transformList.Add(entryTransform);
     }
 
-    void Update()
-    {
-
-    }
 }

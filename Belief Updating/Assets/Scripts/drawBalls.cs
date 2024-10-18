@@ -22,6 +22,7 @@ public class drawBalls : MonoBehaviour
     public int maxBallsPerRow = 4;    // Maximum balls per row
 
     private string jsonFilePath = parameters.jsonFilePath;
+    private urnTable urnTable;
 
     [System.Serializable]
 
@@ -42,11 +43,10 @@ public class drawBalls : MonoBehaviour
 
     public void Start()
     {
+        DefineVar();
         // Load the ball draws from the JSON file
         ballDraws = LoadBallDrawsFromJson();
         Debug.Log("instanceName: " + instanceName);
-
-        DefineVar();
     }
 
     public void OnClick()
@@ -89,6 +89,9 @@ public class drawBalls : MonoBehaviour
 
     private void DefineVar()
     {
+        urnTable = FindObjectOfType<urnTable>();
+        instanceName = urnTable.instanceNameMaster;
+
         ballContainer = transform.Find("ballDrawArea").Find("ballContainer");
         blackTemplate = ballContainer.Find("blackTemplate");
         whiteTemplate = ballContainer.Find("whiteTemplate");

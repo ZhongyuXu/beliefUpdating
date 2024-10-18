@@ -20,6 +20,7 @@ public class urns : MonoBehaviour
     public float urnSpaceH = 200f;
     public int maxBallsPerRow = 3;    // Maximum balls per row
     private string jsonFilePath = parameters.jsonFilePath;
+    private urnTable urnTable;
 
     [System.Serializable]
     public class UrnInfo
@@ -49,6 +50,9 @@ public class urns : MonoBehaviour
 
     private void DefineVar()
     {
+        urnTable = FindObjectOfType<urnTable>();
+        instanceName = urnTable.instanceNameMaster;
+        
         urnContainer = transform.Find("urnContainer");
         urnTemplate = urnContainer.Find("urnTemplate");   
         ballContainer = urnContainer.Find("ballContainer");

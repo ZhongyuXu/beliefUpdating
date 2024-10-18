@@ -12,9 +12,10 @@ public class questionsColour : MonoBehaviour
     public string instanceName;
     private Transform colourSliderTemplate, colourSliderContainer;
     private List<string> ballCompList, ballColours;
-    public float questionH = 70f;
+    public float questionH = 65f;
     private string jsonFilePath = parameters.jsonFilePath;
     private object uniqueColorList;
+    private urnTable urnTable;
 
     [System.Serializable]
 
@@ -71,6 +72,8 @@ public class questionsColour : MonoBehaviour
     }
     private void DefineVar()
     {
+        urnTable = FindObjectOfType<urnTable>();
+        instanceName = urnTable.instanceNameMaster;
         colourSliderContainer = transform.Find("colourSliderContainer");
         colourSliderTemplate = colourSliderContainer.Find("colourSliderTemplate");
 

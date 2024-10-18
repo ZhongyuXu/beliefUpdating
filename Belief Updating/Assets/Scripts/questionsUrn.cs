@@ -12,8 +12,9 @@ public class questionsUrn : MonoBehaviour
     public string instanceName;
     private Transform urnSliderTemplate, urnSliderContainer;
     private List<UrnInfo> urnEntryList;
-    public float questionH = 70f;
+    public float questionH = 65f;
     private string jsonFilePath = parameters.jsonFilePath;
+    private urnTable urnTable;
 
     [System.Serializable]
 
@@ -64,6 +65,8 @@ public class questionsUrn : MonoBehaviour
     }
     private void DefineVar()
     {
+        urnTable = FindObjectOfType<urnTable>();
+        instanceName = urnTable.instanceNameMaster;
         urnSliderContainer = transform.Find("urnSliderContainer");
         urnSliderTemplate = urnSliderContainer.Find("urnSliderTemplate");
 
