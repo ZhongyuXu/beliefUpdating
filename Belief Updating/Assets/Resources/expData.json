@@ -1,0 +1,14 @@
+[
+  {
+    "participantID": "pTest",
+    "instanceName": "BU1",
+    "urnPosteriors": [
+      100.0,
+      0.0
+    ],
+    "colourPosteriors": [
+      0.0,
+      100.0
+    ]
+  }
+]

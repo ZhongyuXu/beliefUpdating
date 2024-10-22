@@ -3,42 +3,60 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 public class submitButtonColour : MonoBehaviour
 {
-    public Button submitButton;
-    private Transform sumToOneText, urnSliderContainer;
+    public Button submitButton, urnSubmitButton;
+    private Transform sumToOneText, urnSliderContainer, colourSliderContainer, urnQuestionCanvas, colourQuestionCanvas;
+    private drawBalls drawBalls;
+    private urnTable urnTable;
+    private string participantID = "pTest", instanceName;
+    private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
+    
     public void Start()
     {
         DefineVar();
-        
     }
 
     public void OnClick()
     {
-        Debug.Log("Submit Button Clicked");
         bool addToOne = sumToOneCheck();
         if (addToOne)
         {
             LockSliders();
+            RecordDataBothQuestions();
+            ExportData();
+            HideResetBothQuestions();
         }
         else
-        {}
+        {            
+            sumToOneText.gameObject.SetActive(true);
+        }
     }
 
     private void DefineVar()
     {
         // slider container is at the same level as the submit button
-        urnSliderContainer = transform.parent.Find("colourSliderContainer");
+        urnSliderContainer = GameObject.Find("urnSliderContainer")?.transform;
+        colourSliderContainer = transform.parent.Find("colourSliderContainer");
         submitButton.onClick.AddListener(OnClick);
 
         // sumToOneText is the child of the submit button
         sumToOneText = transform.Find("sumToOneText");
         sumToOneText.gameObject.SetActive(false);  
+
+        drawBalls = FindAnyObjectByType<drawBalls>();
+        urnQuestionCanvas = GameObject.Find("Urn Question Canvas")?.transform;
+        colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
+
+        urnTable = FindObjectOfType<urnTable>();
+        instanceName = urnTable.instanceNameMaster;
     }
+    
     private void LockSliders()
     {
-        foreach (Transform child in urnSliderContainer)
+        foreach (Transform child in colourSliderContainer)
         {
             if (child.TryGetComponent<Slider>(out Slider slider))
             {
@@ -46,11 +64,14 @@ public class submitButtonColour : MonoBehaviour
             }
         }
         sumToOneText.gameObject.SetActive(false);
+        // inactivate the submit button
+        submitButton.interactable = false;
     }
+    
     private bool sumToOneCheck()
     {
         float sum = 0;
-        foreach (Transform child in urnSliderContainer)
+        foreach (Transform child in colourSliderContainer)
         {
             if (child.TryGetComponent<Slider>(out Slider slider))
             {
@@ -60,7 +81,6 @@ public class submitButtonColour : MonoBehaviour
         if (sum != 100)
         {
             Debug.Log("Sum: " + sum);
-            sumToOneText.gameObject.SetActive(true);
             return false;
         }
         else
@@ -68,5 +88,83 @@ public class submitButtonColour : MonoBehaviour
             Debug.Log("Sum: " + sum);
             return true;
         }
+    }
+    
+    private void RecordDataBothQuestions()
+    {
+        Dictionary<string, object> data = new Dictionary<string, object>
+        {
+            { "participantID", participantID },
+            { "instanceName", instanceName },
+            { "urnPosteriors", new List<float>() },
+            { "colourPosteriors", new List<float>() }
+        };
+
+        bool firstSliderSkipped = false;
+        foreach (Transform child in urnSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                if (!firstSliderSkipped)
+                {
+                    firstSliderSkipped = true;
+                    continue;
+                }
+                
+                ((List<float>)data["urnPosteriors"]).Add(slider.value);
+            }
+        }
+
+        bool firstSliderSkippedColour = false;
+        foreach (Transform child in colourSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                if (!firstSliderSkippedColour)
+                {
+                    firstSliderSkippedColour = true;
+                    continue;
+                }
+                
+                ((List<float>)data["colourPosteriors"]).Add(slider.value);
+            }
+        }
+
+        sliderValuesDict.Add(data);
+    }
+
+    private void ExportData()
+    {
+        string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
+        string filePath = Application.dataPath + "/Resources/expData.json";
+        File.WriteAllText(filePath, json);
+    }
+
+    private void HideResetBothQuestions()
+    {
+        // hide both questions
+        drawBalls.SetCanvasGroupVisibility(urnQuestionCanvas, false);
+        drawBalls.SetCanvasGroupVisibility(colourQuestionCanvas, false);
+
+        // reset the sliders to 0
+        foreach (Transform child in colourSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                slider.interactable = true;
+                slider.value = 0;
+            }
+        }
+        foreach (Transform child in urnSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                slider.interactable = true;
+                slider.value = 0;
+            }
+        }
+        // activate the submit button
+        submitButton.interactable = true;
+        urnSubmitButton.interactable = true;
     }
 }

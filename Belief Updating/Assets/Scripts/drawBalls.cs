@@ -10,9 +10,11 @@ using UnityEngine.UI;
 public class drawBalls : MonoBehaviour
 {
     public string instanceName;
+    public float timeDelaySecs = 1.0f;
     private List<string> ballDraws;
     private int currentBallDraw = 0;
     private Transform ballContainer;
+    public Transform urnQuestionCanvas, colourQuestionCanvas;
     private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate;
     private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
 
@@ -44,6 +46,7 @@ public class drawBalls : MonoBehaviour
     public void Start()
     {
         DefineVar();
+        HideTwoQuestions();
         // Load the ball draws from the JSON file
         ballDraws = LoadBallDrawsFromJson();
         Debug.Log("instanceName: " + instanceName);
@@ -51,8 +54,6 @@ public class drawBalls : MonoBehaviour
 
     public void OnClick()
     {
-        Debug.Log("Button Clicked");
-
         // figure out how many ball draws in this instance
         int ballDrawsCount = ballDraws.Count;
         
@@ -61,6 +62,7 @@ public class drawBalls : MonoBehaviour
             string ballDraw = ballDraws[currentBallDraw];
             CreateBallDraws(ballDraw, ballContainer, currentBallDraw);
             currentBallDraw++;
+            ShowUrnQuestionWithDelay();
         }
 
     }
@@ -107,10 +109,27 @@ public class drawBalls : MonoBehaviour
         whiteBallPrefab = whiteTemplate.gameObject;
         purpleBallPrefab = purpleTemplate.gameObject;
         greenBallPrefab = greenTemplate.gameObject;
+
+        urnQuestionCanvas = GameObject.Find("Urn Question Canvas")?.transform;
+        colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
     }
 
-
-
+    private void HideTwoQuestions()
+    {
+        SetCanvasGroupVisibility(urnQuestionCanvas, false);
+        SetCanvasGroupVisibility(colourQuestionCanvas, false);
+    }
+    public void SetCanvasGroupVisibility(Transform canvas, bool isVisible)
+    {
+        CanvasGroup canvasGroup = canvas.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
+        }
+        canvasGroup.alpha = isVisible ? 1 : 0;
+        canvasGroup.interactable = isVisible;
+        canvasGroup.blocksRaycasts = isVisible;
+    }
     // This function generates balls based on the composition list from the JSON
     private void CreateBallDraws(string balldraw, Transform container, int ballDrawSequence)
     {
@@ -166,6 +185,16 @@ public class drawBalls : MonoBehaviour
             _ => null,  // Add more colors if needed
         };
 
+    }
+    private void ShowUrnQuestionWithDelay()
+    {
+        StartCoroutine(ShowUrnQuestionAfterDelay());
+    }
+
+    private IEnumerator ShowUrnQuestionAfterDelay()
+    {
+        yield return new WaitForSeconds(timeDelaySecs);
+        SetCanvasGroupVisibility(urnQuestionCanvas, true);
     }
 
 }

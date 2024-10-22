@@ -140,6 +140,7 @@ GameObject:
   - component: {fileID: 61837622}
   - component: {fileID: 61837621}
   - component: {fileID: 61837620}
+  - component: {fileID: 61837623}
   m_Layer: 5
   m_Name: submitButton
   m_TagString: Untagged
@@ -165,7 +166,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 991, y: -280}
+  m_AnchoredPosition: {x: 991, y: -275}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &61837620
@@ -250,6 +251,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 61837618}
   m_CullTransparentMesh: 1
+--- !u!114 &61837623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61837618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ff5b2ca5f56f4c9a96799f4a9cce1c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  submitButton: {fileID: 61837620}
+  urnSubmitButton: {fileID: 1620880524}
 --- !u!1001 &84509182
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -802,7 +817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   instanceName: 
-  questionH: 70
+  questionH: 65
 --- !u!1 &368911707
 GameObject:
   m_ObjectHideFlags: 0
@@ -926,7 +941,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   instanceName: 
-  questionH: 70
+  questionH: 65
 --- !u!1 &388893660
 GameObject:
   m_ObjectHideFlags: 0
@@ -1555,7 +1570,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -360, y: -34.786175}
+  m_AnchoredPosition: {x: -400, y: -34.786175}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &606948755
@@ -1591,7 +1606,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: The sum of probabilities must be 1
+  m_Text: The sum of probabilities must be 100%
 --- !u!222 &606948756
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1804,7 +1819,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -359.99988, y: -20}
+  m_AnchoredPosition: {x: -400, y: -20}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &730771751
@@ -1840,7 +1855,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: The sum of probabilities must be 1
+  m_Text: The sum of probabilities must be 100%
 --- !u!222 &730771752
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1997,6 +2012,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   instanceName: 
+  timeDelaySecs: 1
+  urnQuestionCanvas: {fileID: 0}
+  colourQuestionCanvas: {fileID: 0}
   ballSpaceV: 16
   ballSpaceH: 40
   maxBallsPerRow: 4
@@ -3084,7 +3102,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 991, y: -292}
+  m_AnchoredPosition: {x: 991, y: -275}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1620880524

@@ -7,7 +7,8 @@ using UnityEngine.UI;
 public class submitButtonUrn : MonoBehaviour
 {
     public Button submitButton;
-    private Transform sumToOneText, urnSliderContainer;
+    private Transform sumToOneText, urnSliderContainer,colourQuestionCanvas;
+    private drawBalls drawBalls;
     public void Start()
     {
         DefineVar();
@@ -16,14 +17,16 @@ public class submitButtonUrn : MonoBehaviour
 
     public void OnClick()
     {
-        Debug.Log("Submit Button Clicked");
         bool addToOne = sumToOneCheck();
         if (addToOne)
         {
             LockSliders();
+            ShowColourQuestion();
         }
         else
-        {}
+        {
+            sumToOneText.gameObject.SetActive(true);
+        }
     }
 
     private void DefineVar()
@@ -34,7 +37,10 @@ public class submitButtonUrn : MonoBehaviour
 
         // sumToOneText is the child of the submit button
         sumToOneText = transform.Find("sumToOneText");
-        sumToOneText.gameObject.SetActive(false);  
+        sumToOneText.gameObject.SetActive(false); 
+
+        drawBalls = FindAnyObjectByType<drawBalls>();
+        colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
     }
     private void LockSliders()
     {
@@ -45,7 +51,10 @@ public class submitButtonUrn : MonoBehaviour
                 slider.interactable = false;
             }
         }
+        // turn off the warning text
         sumToOneText.gameObject.SetActive(false);
+        // inactivate the submit button
+        submitButton.interactable = false;
     }
     private bool sumToOneCheck()
     {
@@ -60,7 +69,6 @@ public class submitButtonUrn : MonoBehaviour
         if (sum != 100)
         {
             Debug.Log("Sum: " + sum);
-            sumToOneText.gameObject.SetActive(true);
             return false;
         }
         else
@@ -68,5 +76,9 @@ public class submitButtonUrn : MonoBehaviour
             Debug.Log("Sum: " + sum);
             return true;
         }
+    }
+    private void ShowColourQuestion()
+    {
+        drawBalls.SetCanvasGroupVisibility(colourQuestionCanvas, true);
     }
 }
