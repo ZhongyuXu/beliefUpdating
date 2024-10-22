@@ -7,17 +7,22 @@ public class slider : MonoBehaviour
 {
     [SerializeField] private Slider _slider;
     [SerializeField] private Text _sliderText;
-    // Start is called before the first frame update
+    [SerializeField] private Transform _cursor, _fill;
     void Start()
     {
+        // Initially hide the cursor and slider text
+        InitialCursorVisible(false);
+
+        // Add listener to show cursor and slider text when the slider value changes
         _slider.onValueChanged.AddListener((v) => {
             _sliderText.text = v.ToString() + "%";
+            InitialCursorVisible(true);
         });
     }
-
-    // Update is called once per frame
-    void Update()
+    void InitialCursorVisible(bool TF)
     {
-        
+        _cursor.gameObject.SetActive(TF);
+        _fill.gameObject.SetActive(TF);
+        _sliderText.gameObject.SetActive(TF);
     }
 }

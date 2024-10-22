@@ -1149,6 +1149,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _slider: {fileID: 447844512}
   _sliderText: {fileID: 1048453622}
+  _cursor: {fileID: 1166658742}
+  _fill: {fileID: 1893636288}
 --- !u!114 &447844512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2614,6 +2616,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _slider: {fileID: 1105692579}
   _sliderText: {fileID: 1983248080}
+  _cursor: {fileID: 476513774}
+  _fill: {fileID: 1715644948}
 --- !u!1 &1163389066
 GameObject:
   m_ObjectHideFlags: 0
