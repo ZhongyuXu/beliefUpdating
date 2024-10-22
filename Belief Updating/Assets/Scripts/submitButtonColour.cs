@@ -7,11 +7,12 @@ using Newtonsoft.Json;
 
 public class submitButtonColour : MonoBehaviour
 {
-    public Button submitButton, urnSubmitButton;
+    public Button submitButton, urnSubmitButton, drawButton;
     private Transform sumToOneText, urnSliderContainer, colourSliderContainer, urnQuestionCanvas, colourQuestionCanvas;
     private drawBalls drawBalls;
     private urnTable urnTable;
     private string participantID = "pTest", instanceName;
+    private int seqBall;
     private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
     
     public void Start()
@@ -28,6 +29,7 @@ public class submitButtonColour : MonoBehaviour
             RecordDataBothQuestions();
             ExportData();
             HideResetBothQuestions();
+            UnlockDrawButton();
         }
         else
         {            
@@ -47,6 +49,7 @@ public class submitButtonColour : MonoBehaviour
         sumToOneText.gameObject.SetActive(false);  
 
         drawBalls = FindAnyObjectByType<drawBalls>();
+        drawButton = drawBalls.drawButton;
         urnQuestionCanvas = GameObject.Find("Urn Question Canvas")?.transform;
         colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
 
@@ -92,10 +95,13 @@ public class submitButtonColour : MonoBehaviour
     
     private void RecordDataBothQuestions()
     {
+        seqBall = drawBalls.currentBallDraw;
+
         Dictionary<string, object> data = new Dictionary<string, object>
         {
             { "participantID", participantID },
             { "instanceName", instanceName },
+            { "seqBall", seqBall},
             { "urnPosteriors", new List<float>() },
             { "colourPosteriors", new List<float>() }
         };
@@ -125,7 +131,7 @@ public class submitButtonColour : MonoBehaviour
                     firstSliderSkippedColour = true;
                     continue;
                 }
-                
+
                 ((List<float>)data["colourPosteriors"]).Add(slider.value);
             }
         }
@@ -136,7 +142,7 @@ public class submitButtonColour : MonoBehaviour
     private void ExportData()
     {
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
-        string filePath = Application.dataPath + "/Resources/expData.json";
+        string filePath = Application.dataPath + "/Resources/"+participantID+instanceName+".json";
         File.WriteAllText(filePath, json);
     }
 
@@ -166,5 +172,9 @@ public class submitButtonColour : MonoBehaviour
         // activate the submit button
         submitButton.interactable = true;
         urnSubmitButton.interactable = true;
+    }
+    private void UnlockDrawButton()
+    {
+        drawButton.interactable = true;
     }
 }

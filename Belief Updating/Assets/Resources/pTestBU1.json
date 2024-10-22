@@ -1,0 +1,28 @@
+[
+  {
+    "participantID": "pTest",
+    "instanceName": "BU1",
+    "seqBall": 1,
+    "urnPosteriors": [
+      30.0,
+      70.0
+    ],
+    "colourPosteriors": [
+      67.0,
+      33.0
+    ]
+  },
+  {
+    "participantID": "pTest",
+    "instanceName": "BU1",
+    "seqBall": 2,
+    "urnPosteriors": [
+      100.0,
+      0.0
+    ],
+    "colourPosteriors": [
+      100.0,
+      0.0
+    ]
+  }
+]

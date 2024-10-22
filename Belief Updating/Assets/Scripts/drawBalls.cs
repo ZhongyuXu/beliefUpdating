@@ -11,8 +11,9 @@ public class drawBalls : MonoBehaviour
 {
     public string instanceName;
     public float timeDelaySecs = 1.0f;
+    public Button drawButton;
     private List<string> ballDraws;
-    private int currentBallDraw = 0;
+    public int currentBallDraw = 0;
     private Transform ballContainer;
     public Transform urnQuestionCanvas, colourQuestionCanvas;
     private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate;
@@ -54,6 +55,8 @@ public class drawBalls : MonoBehaviour
 
     public void OnClick()
     {
+        //disable the button
+        drawButton.interactable = false;
         // figure out how many ball draws in this instance
         int ballDrawsCount = ballDraws.Count;
         
@@ -112,6 +115,8 @@ public class drawBalls : MonoBehaviour
 
         urnQuestionCanvas = GameObject.Find("Urn Question Canvas")?.transform;
         colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
+
+        drawButton.onClick.AddListener(OnClick);
     }
 
     private void HideTwoQuestions()
