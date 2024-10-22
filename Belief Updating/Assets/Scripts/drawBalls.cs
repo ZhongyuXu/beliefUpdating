@@ -97,7 +97,7 @@ public class drawBalls : MonoBehaviour
         urnTable = FindObjectOfType<urnTable>();
         instanceName = urnTable.instanceNameMaster;
 
-        ballContainer = transform.Find("ballDrawArea").Find("ballContainer");
+        ballContainer = transform.parent.Find("ballDrawArea").Find("ballContainer");
         blackTemplate = ballContainer.Find("blackTemplate");
         whiteTemplate = ballContainer.Find("whiteTemplate");
         purpleTemplate = ballContainer.Find("purpleTemplate");

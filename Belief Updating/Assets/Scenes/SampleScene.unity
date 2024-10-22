@@ -265,6 +265,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   submitButton: {fileID: 61837620}
   urnSubmitButton: {fileID: 1620880524}
+  drawButton: {fileID: 0}
 --- !u!1001 &84509182
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -680,15 +681,15 @@ Transform:
   m_GameObject: {fileID: 342075970}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 247.91942, y: -83.391075, z: -0.52779746}
-  m_LocalScale: {x: 0.5909718, y: 0.5909718, z: 0.5909718}
+  m_LocalPosition: {x: 280, y: -282, z: 0}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.0488393}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 368911708}
   - {fileID: 1874931407}
   - {fileID: 1323846777}
   - {fileID: 1947116069}
-  m_Father: {fileID: 759429219}
+  m_Father: {fileID: 2039496630}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &361553058
 GameObject:
@@ -852,8 +853,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -534, y: -133}
-  m_SizeDelta: {x: 325, y: 101.56}
+  m_AnchoredPosition: {x: -634, y: -134}
+  m_SizeDelta: {x: 240, y: 101.56}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &368911709
 MonoBehaviour:
@@ -1897,12 +1898,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1180771071}
-  - {fileID: 342075971}
   m_Father: {fileID: 2039496630}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -566, y: -167}
+  m_AnchoredPosition: {x: -822, y: -425}
   m_SizeDelta: {x: 194.4345, y: 155.3136}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &759429220
@@ -1948,19 +1948,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 759429221}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 759429223}
-        m_TargetAssemblyTypeName: drawBalls, Assembly-CSharp
-        m_MethodName: OnClick
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &759429221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2013,6 +2001,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   instanceName: 
   timeDelaySecs: 1
+  drawButton: {fileID: 759429220}
   currentBallDraw: 0
   urnQuestionCanvas: {fileID: 0}
   colourQuestionCanvas: {fileID: 0}
@@ -2908,7 +2897,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -537.8, y: -66.4}
+  m_AnchoredPosition: {x: -635, y: -66.4}
   m_SizeDelta: {x: 750, y: 162.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1323846778
@@ -3668,8 +3657,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -534, y: -64.06134}
-  m_SizeDelta: {x: 325, y: 16.25}
+  m_AnchoredPosition: {x: -634.00006, y: -65.06135}
+  m_SizeDelta: {x: 240, y: 16.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1874931408
 MonoBehaviour:
@@ -3781,7 +3770,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 475, y: 92}
+  m_AnchoredPosition: {x: 400, y: 92}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1983248078
@@ -4178,6 +4167,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 759429219}
+  - {fileID: 342075971}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
