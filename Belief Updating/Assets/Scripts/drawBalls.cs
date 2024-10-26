@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class drawBalls : MonoBehaviour
 {
     public string instanceName;
-    public float timeDelaySecs = 1.0f;
+    public float timeDelaySecs = 1.0f, startTimeUrnQuestion;
     public Button drawButton;
     private List<string> ballDraws;
     public int currentBallDraw = 0;
@@ -21,7 +21,7 @@ public class drawBalls : MonoBehaviour
 
     // Ball layout settings
     public float ballSpaceV = 16.25f;
-    public float ballSpaceH = 16.25f;
+    public float ballSpaceH = 30f;
     public int maxBallsPerRow = 4;    // Maximum balls per row
 
     private string jsonFilePath = parameters.jsonFilePath;
@@ -200,6 +200,8 @@ public class drawBalls : MonoBehaviour
     {
         yield return new WaitForSeconds(timeDelaySecs);
         SetCanvasGroupVisibility(urnQuestionCanvas, true);
+        // Record the start time
+        startTimeUrnQuestion = Time.time;
     }
 
 }

@@ -10,27 +10,31 @@
       0.0
     ],
     "colourPosteriors": [
-      0.0,
       100.0,
       0.0,
+      0.0,
       0.0
-    ]
+    ],
+    "responseTimeUrn": 1.61001837,
+    "responseTimeColour": 1.35348129
   },
   {
     "participantID": "pTest",
     "instanceName": "BU18",
     "seqBall": 2,
     "urnPosteriors": [
-      0.0,
-      0.0,
       100.0,
+      0.0,
+      0.0,
       0.0
     ],
     "colourPosteriors": [
+      100.0,
       0.0,
       0.0,
-      0.0,
-      100.0
-    ]
+      0.0
+    ],
+    "responseTimeUrn": 2.60150528,
+    "responseTimeColour": 2.03354645
   }
 ]

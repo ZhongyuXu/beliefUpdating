@@ -8,9 +8,11 @@ using Newtonsoft.Json;
 public class submitButtonColour : MonoBehaviour
 {
     public Button submitButton, urnSubmitButton, drawButton;
+    public float responseTimeColourQuestion;
     private Transform sumToOneText, urnSliderContainer, colourSliderContainer, urnQuestionCanvas, colourQuestionCanvas;
     private drawBalls drawBalls;
     private urnTable urnTable;
+    private submitButtonUrn submitButtonUrn;
     private string participantID = "pTest", instanceName;
     private int seqBall;
     private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
@@ -26,6 +28,7 @@ public class submitButtonColour : MonoBehaviour
         if (addToOne)
         {
             LockSliders();
+            responseTimeColourQuestion = Time.time - submitButtonUrn.startTimeColourQuestion;
             RecordDataBothQuestions();
             ExportData();
             HideResetBothQuestions();
@@ -55,6 +58,8 @@ public class submitButtonColour : MonoBehaviour
 
         urnTable = FindObjectOfType<urnTable>();
         instanceName = urnTable.instanceNameMaster;
+
+        submitButtonUrn = FindAnyObjectByType<submitButtonUrn>();
     }
     
     private void LockSliders()
@@ -103,7 +108,9 @@ public class submitButtonColour : MonoBehaviour
             { "instanceName", instanceName },
             { "seqBall", seqBall},
             { "urnPosteriors", new List<float>() },
-            { "colourPosteriors", new List<float>() }
+            { "colourPosteriors", new List<float>() },
+            { "responseTimeUrn", submitButtonUrn.responseTimeUrnQuestion },
+            { "responseTimeColour", responseTimeColourQuestion }
         };
 
         bool firstSliderSkipped = false;
@@ -142,7 +149,7 @@ public class submitButtonColour : MonoBehaviour
     private void ExportData()
     {
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
-        string filePath = Application.dataPath + "/Resources/"+participantID+instanceName+".json";
+        string filePath = Application.dataPath + "/participantData/"+participantID+instanceName+".json";
         File.WriteAllText(filePath, json);
     }
 

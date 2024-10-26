@@ -9,6 +9,7 @@ public class submitButtonUrn : MonoBehaviour
     public Button submitButton;
     private Transform sumToOneText, urnSliderContainer,colourQuestionCanvas;
     private drawBalls drawBalls;
+    public float responseTimeUrnQuestion, startTimeColourQuestion;
     public void Start()
     {
         DefineVar();
@@ -21,6 +22,7 @@ public class submitButtonUrn : MonoBehaviour
         if (addToOne)
         {
             LockSliders();
+            responseTimeUrnQuestion = Time.time - drawBalls.startTimeUrnQuestion;
             ShowColourQuestion();
         }
         else
@@ -80,5 +82,7 @@ public class submitButtonUrn : MonoBehaviour
     private void ShowColourQuestion()
     {
         drawBalls.SetCanvasGroupVisibility(colourQuestionCanvas, true);
+        // Record the start time of the colour question
+        startTimeColourQuestion = Time.time;
     }
 }

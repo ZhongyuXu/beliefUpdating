@@ -16,9 +16,9 @@ public class urns : MonoBehaviour
     private float dupScale = 1.39f;
     public float ballSpaceV = 16.25f;
     public float ballSpaceH = 16.25f;
-    public float urnSpaceV = 0f;
-    public float urnSpaceH = 200f;
-    public int maxBallsPerRow = 3;    // Maximum balls per row
+    public float urnSpaceV = -110f;
+    public float urnSpaceH = 100f;
+    public int maxBallsPerRow = 4, maxUrnPerRow = 3;    // Maximum balls per row
     private string jsonFilePath = parameters.jsonFilePath;
     private urnTable urnTable;
 
@@ -52,7 +52,7 @@ public class urns : MonoBehaviour
     {
         urnTable = FindObjectOfType<urnTable>();
         instanceName = urnTable.instanceNameMaster;
-        
+
         urnContainer = transform.Find("urnContainer");
         urnTemplate = urnContainer.Find("urnTemplate");   
         ballContainer = urnContainer.Find("ballContainer");
@@ -81,10 +81,14 @@ public class urns : MonoBehaviour
         // Create the urns. Omit the last entry since it's not an urn. It is the total urns row
         for (int i = 0; i < urnEntryList.Count - 1; i++)
         {
+            // Calculate row and column based on the maximum urns per row
+            int row = i / maxUrnPerRow;
+            int column = i % maxUrnPerRow;
+
             // Create the urn background
             Transform urnTransform = Instantiate(urnTemplate, urnContainer);
             RectTransform urnRectTransform = urnTransform.GetComponent<RectTransform>();
-            urnRectTransform.anchoredPosition = new Vector3(urnSpaceH * i, urnSpaceV * i, 10);
+            urnRectTransform.anchoredPosition = new Vector3(urnSpaceH * column, urnSpaceV * row, 10);
             urnTransform.gameObject.SetActive(true);
         }
     }
@@ -94,13 +98,17 @@ public class urns : MonoBehaviour
         // Create the urns. Omit the last entry since it's not an urn. It is the total urns row
         for (int i = 0; i < urnEntryList.Count - 1; i++)
         {
+            // Calculate row and column based on the maximum urns per row
+            int row = i / maxUrnPerRow;
+            int column = i % maxUrnPerRow;
+
             // Get data for one urn (i.e. Urn A)
             UrnInfo urnEntry = urnEntryList[i];
 
             // Create the text for the urn
             Transform textTransform = Instantiate(textTemplate, textContainer);
             RectTransform textRectTransform = textTransform.GetComponent<RectTransform>();
-            textRectTransform.anchoredPosition = new Vector3(urnSpaceH * i * dupScale, urnSpaceV * i * dupScale, 0);
+            textRectTransform.anchoredPosition = new Vector3(urnSpaceH * column * dupScale, urnSpaceV * row * dupScale, 0);
             textTransform.gameObject.SetActive(true);
             textTransform.Find("urnName").GetComponent<Text>().text = urnEntry.urnName;
 
@@ -137,11 +145,15 @@ public class urns : MonoBehaviour
                 Transform entryTransform = Instantiate(template, container);
                 RectTransform entryRectTransform = entryTransform.GetComponent<RectTransform>();
 
+                // Calculate urn row and column based on maxUrnPerRow
+                int urnRow = urnSequence / maxUrnPerRow;
+                int urnColumn = urnSequence % maxUrnPerRow;
+
                 float forwardZPosition = 0f;
 
                 entryRectTransform.anchoredPosition = new Vector3(
-                    urnSequence * urnSpaceH * dupScale + ballSpaceH * column, 
-                    urnSequence * urnSpaceV * dupScale + ballSpaceV * row, 
+                    urnColumn * urnSpaceH * dupScale + ballSpaceH * column, 
+                    urnRow * urnSpaceV * dupScale + ballSpaceV * row, 
                     forwardZPosition);
 
                 entryTransform.gameObject.SetActive(true);
