@@ -2007,6 +2007,7 @@ MonoBehaviour:
   startTimeUrnQuestion: 0
   drawButton: {fileID: 759429220}
   currentBallDraw: 0
+  ballDrawsCount: 0
   urnQuestionCanvas: {fileID: 803148814}
   colourQuestionCanvas: {fileID: 1337799252}
   ballSpaceV: 16.25

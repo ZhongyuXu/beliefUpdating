@@ -13,7 +13,7 @@ public class drawBalls : MonoBehaviour
     public float timeDelaySecs = 1.0f, startTimeUrnQuestion;
     public Button drawButton;
     private List<string> ballDraws;
-    public int currentBallDraw = 0;
+    public int currentBallDraw = 0, ballDrawsCount;
     private Transform ballContainer;
     public Transform urnQuestionCanvas, colourQuestionCanvas;
     private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate;
@@ -50,6 +50,7 @@ public class drawBalls : MonoBehaviour
         HideTwoQuestions();
         // Load the ball draws from the JSON file
         ballDraws = LoadBallDrawsFromJson();
+        ballDrawsCount = ballDraws.Count;
         Debug.Log("instanceName: " + instanceName);
     }
 
@@ -58,7 +59,7 @@ public class drawBalls : MonoBehaviour
         //disable the button
         drawButton.interactable = false;
         // figure out how many ball draws in this instance
-        int ballDrawsCount = ballDraws.Count;
+        // int ballDrawsCount = ballDraws.Count;
         
         if (currentBallDraw < ballDrawsCount)
         {

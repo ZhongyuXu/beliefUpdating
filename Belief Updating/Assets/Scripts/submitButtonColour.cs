@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using UnityEngine.SceneManagement;
 
 public class submitButtonColour : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class submitButtonColour : MonoBehaviour
     private drawBalls drawBalls;
     private urnTable urnTable;
     private submitButtonUrn submitButtonUrn;
+    private SceneRandomizer sceneRandomizer;
     private string participantID = "pTest", instanceName;
     private int seqBall;
     private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
@@ -33,6 +35,13 @@ public class submitButtonColour : MonoBehaviour
             ExportData();
             HideResetBothQuestions();
             UnlockDrawButton();
+            // jump to next scene (instance) if no more balls to draw
+            if (drawBalls.currentBallDraw == drawBalls.ballDrawsCount)
+            {
+                // SceneManager.LoadScene(3);
+                sceneRandomizer.LoadNextScene();
+            }
+
         }
         else
         {            
@@ -60,6 +69,7 @@ public class submitButtonColour : MonoBehaviour
         instanceName = urnTable.instanceNameMaster;
 
         submitButtonUrn = FindAnyObjectByType<submitButtonUrn>();
+        sceneRandomizer = FindObjectOfType<SceneRandomizer>();
     }
     
     private void LockSliders()
@@ -88,12 +98,10 @@ public class submitButtonColour : MonoBehaviour
         }
         if (sum != 100)
         {
-            Debug.Log("Sum: " + sum);
             return false;
         }
         else
         {
-            Debug.Log("Sum: " + sum);
             return true;
         }
     }

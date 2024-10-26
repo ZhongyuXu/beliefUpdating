@@ -70,12 +70,10 @@ public class submitButtonUrn : MonoBehaviour
         }
         if (sum != 100)
         {
-            Debug.Log("Sum: " + sum);
             return false;
         }
         else
         {
-            Debug.Log("Sum: " + sum);
             return true;
         }
     }

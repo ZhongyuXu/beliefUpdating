@@ -473,6 +473,50 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 44d335a48e845475eb25c51c07b489ce, type: 3}
+--- !u!1 &171613727
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 171613729}
+  - component: {fileID: 171613728}
+  m_Layer: 0
+  m_Name: sceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &171613728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 171613727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d20f6fb122de8454dafec9d953e0310c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &171613729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 171613727}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 549.6006, y: 424.02493, z: -0.05859375}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &290851430
 GameObject:
   m_ObjectHideFlags: 0
@@ -2007,6 +2051,7 @@ MonoBehaviour:
   startTimeUrnQuestion: 0
   drawButton: {fileID: 759429220}
   currentBallDraw: 0
+  ballDrawsCount: 0
   urnQuestionCanvas: {fileID: 803148814}
   colourQuestionCanvas: {fileID: 1337799252}
   ballSpaceV: 16.25
@@ -4381,3 +4426,4 @@ SceneRoots:
   - {fileID: 2039496630}
   - {fileID: 803148814}
   - {fileID: 1337799252}
+  - {fileID: 171613729}
