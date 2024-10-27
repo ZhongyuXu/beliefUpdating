@@ -12,8 +12,8 @@
       0.0,
       0.0
     ],
-    "responseTimeUrn": 2.04047775,
-    "responseTimeColour": 1.41620636
+    "responseTimeUrn": 1.45615768,
+    "responseTimeColour": 2.031456
   },
   {
     "participantID": "pTest",
@@ -24,27 +24,27 @@
       0.0
     ],
     "colourPosteriors": [
-      0.0,
       100.0,
+      0.0,
       0.0
     ],
-    "responseTimeUrn": 1.62022018,
-    "responseTimeColour": 3.130844
+    "responseTimeUrn": 1.58481789,
+    "responseTimeColour": 1.67287827
   },
   {
     "participantID": "pTest",
     "instanceName": "BU3",
     "seqBall": 3,
     "urnPosteriors": [
-      0.0,
-      100.0
+      100.0,
+      0.0
     ],
     "colourPosteriors": [
+      100.0,
       0.0,
-      0.0,
-      100.0
+      0.0
     ],
-    "responseTimeUrn": 1.26437,
-    "responseTimeColour": 1.33546066
+    "responseTimeUrn": 1.628542,
+    "responseTimeColour": 3.65572548
   }
 ]

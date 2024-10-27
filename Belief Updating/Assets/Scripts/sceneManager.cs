@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,10 +7,11 @@ using UnityEngine.SceneManagement;
 public class SceneRandomizer : MonoBehaviour
 {
     // Scenes that shown upfront and not randomized
-    public int introScenesCount = 1;
+    public int introScenesCount = 2;
     // List of randomized scene indices
     private List<int> sceneBuildIndices = new List<int>();
     private int currentSceneIndex = 0;
+    private float delayTime = 1.0f;
 
     void Awake()
     {
@@ -30,9 +32,11 @@ public class SceneRandomizer : MonoBehaviour
     {
         if (currentSceneIndex < sceneBuildIndices.Count)
         {
-            int buildIndex = sceneBuildIndices[currentSceneIndex];
-            SceneManager.LoadScene(buildIndex);
-            currentSceneIndex++;
+            // Load Fixation Cross before loading the next scene
+            SceneManager.LoadScene("fixationCross");
+
+            // After a delay, load the next scene
+            StartCoroutine(ShowNextSceneWithDelay());
         }
         else
         {
@@ -51,5 +55,14 @@ public class SceneRandomizer : MonoBehaviour
             list[randomIndex] = temp;
         }
         Debug.Log("List shuffled: " + string.Join(", ", list));
+    }
+
+    private IEnumerator ShowNextSceneWithDelay()
+    {
+        yield return new WaitForSeconds(delayTime);
+
+        int buildIndex = sceneBuildIndices[currentSceneIndex];
+        SceneManager.LoadScene(buildIndex);
+        currentSceneIndex++;
     }
 }
