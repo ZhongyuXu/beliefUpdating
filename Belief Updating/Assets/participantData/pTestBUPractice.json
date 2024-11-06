@@ -1,0 +1,17 @@
+[
+  {
+    "participantID": "pTest",
+    "instanceName": "BUPractice",
+    "seqBall": 1,
+    "urnPosteriors": [
+      100.0,
+      0.0
+    ],
+    "colourPosteriors": [
+      100.0,
+      0.0
+    ],
+    "responseTimeUrn": 2.46909666,
+    "responseTimeColour": 6.444873
+  }
+]

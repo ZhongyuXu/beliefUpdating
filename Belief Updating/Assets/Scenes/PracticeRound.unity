@@ -4042,7 +4042,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3384551923951109564, guid: 38f174ff600ce41b6a8d6b88f05ce4c0, type: 3}
       propertyPath: instanceNameMaster
-      value: BU10
+      value: BUPractice
       objectReference: {fileID: 0}
     - target: {fileID: 3769169080998847473, guid: 38f174ff600ce41b6a8d6b88f05ce4c0, type: 3}
       propertyPath: m_Color.b
