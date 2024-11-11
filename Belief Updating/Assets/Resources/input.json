@@ -34,7 +34,7 @@
             "ballDraws": [
                 "B",
                 "B",
-                "W"
+                "B"
             ]
         }
     },
@@ -71,14 +71,56 @@
             ],
             "chosenUrn": "A",
             "ballDraws": [
+                "W",
                 "B",
-                "B",
-                "B"
+                "W"
             ]
         }
     },
     {
         "BU3": {
+            "urnInfo": [
+                {
+                    "urnName": "A",
+                    "prior": "1/2",
+                    "composition": [
+                        "7B",
+                        "2W",
+                        "1P"
+                    ],
+                    "balls": 10
+                },
+                {
+                    "urnName": "B",
+                    "prior": "1/2",
+                    "composition": [
+                        "2B",
+                        "1W",
+                        "7P"
+                    ],
+                    "balls": 10
+                },
+                {
+                    "urnName": "Total",
+                    "prior": "1",
+                    "composition": [
+                        "9B",
+                        "3W",
+                        "8P"
+                    ],
+                    "balls": 20
+                }
+            ],
+            "chosenUrn": "B",
+            "ballDraws": [
+                "P",
+                "B",
+                "P"
+            ]
+        }
+    },
+    {
+        "BU4": {
             "urnInfo": [
                 {
                     "urnName": "A",
@@ -120,48 +162,6 @@
         }
     },
     {
-        "BU4": {
-            "urnInfo": [
-                {
-                    "urnName": "A",
-                    "prior": "1/2",
-                    "composition": [
-                        "7B",
-                        "2W",
-                        "1P"
-                    ],
-                    "balls": 10
-                },
-                {
-                    "urnName": "B",
-                    "prior": "1/2",
-                    "composition": [
-                        "2B",
-                        "1W",
-                        "7P"
-                    ],
-                    "balls": 10
-                },
-                {
-                    "urnName": "Total",
-                    "prior": "1",
-                    "composition": [
-                        "9B",
-                        "3W",
-                        "8P"
-                    ],
-                    "balls": 20
-                }
-            ],
-            "chosenUrn": "B",
-            "ballDraws": [
-                "W",
-                "P",
-                "W"
-            ]
-        }
-    },
-    {
         "BU5": {
             "urnInfo": [
                 {
@@ -198,11 +198,11 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
-                "B",
-                "B",
-                "B"
+                "W",
+                "G",
+                "P"
             ]
         }
     },
@@ -243,11 +243,11 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
-                "G",
-                "P",
-                "G"
+                "B",
+                "B",
+                "P"
             ]
         }
     },
@@ -291,11 +291,11 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "C",
+            "chosenUrn": "B",
             "ballDraws": [
-                "W",
-                "W",
-                "W"
+                "B",
+                "B",
+                "B"
             ]
         }
     },
@@ -339,11 +339,11 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
-                "W",
                 "B",
-                "W"
+                "B",
+                "B"
             ]
         }
     },
@@ -391,11 +391,11 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
-                "P",
-                "W",
-                "P"
+                "B",
+                "B",
+                "B"
             ]
         }
     },
@@ -443,7 +443,7 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
                 "W",
                 "B",
@@ -499,11 +499,11 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "C",
             "ballDraws": [
+                "G",
                 "B",
-                "P",
-                "W"
+                "G"
             ]
         }
     },
@@ -555,11 +555,11 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "C",
+            "chosenUrn": "A",
             "ballDraws": [
+                "W",
                 "B",
-                "G",
-                "G"
+                "W"
             ]
         }
     },
@@ -612,10 +612,10 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "C",
             "ballDraws": [
                 "B",
-                "W",
+                "B",
                 "W"
             ]
         }
@@ -669,10 +669,10 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "C",
+            "chosenUrn": "A",
             "ballDraws": [
-                "W",
                 "B",
+                "W",
                 "W"
             ]
         }
@@ -731,11 +731,11 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "C",
+            "chosenUrn": "D",
             "ballDraws": [
                 "B",
-                "P",
-                "W"
+                "W",
+                "P"
             ]
         }
     },
@@ -793,10 +793,10 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "D",
             "ballDraws": [
                 "B",
-                "B",
+                "W",
                 "B"
             ]
         }
@@ -860,7 +860,7 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
                 "W",
                 "B",
@@ -927,11 +927,11 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "C",
+            "chosenUrn": "A",
             "ballDraws": [
-                "P",
-                "G",
-                "B"
+                "B",
+                "W",
+                "P"
             ]
         }
     },
@@ -966,9 +966,9 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
-                "B",
+                "W",
                 "B",
                 "W"
             ]
