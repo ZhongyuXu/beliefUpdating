@@ -4,21 +4,27 @@ using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class practiceSubmitButtonColour : MonoBehaviour
 {
     public Button submitButton, urnSubmitButton, drawButton;
-    public float delay=1.0f;
-    private Transform sumToOneText, colourSliderContainer, urnAnswerText, colAnswerText, clickButtonText;
+    public float delay=1.0f,responseTimeColourQuestion;
+
+    private Transform sumToOneText,urnSliderContainer, colourSliderContainer, urnAnswerText, colAnswerText, clickButtonText;
     private practiceDrawBalls drawBalls;
     private urnTable urnTable;
     private SceneRandomizer sceneRandomizer;
-    private string instanceName;
+    private practiceSubmitButtonUrn submitButtonUrn;
+
+    private string participantID = "pTest", instanceName;
     private int seqBall, numUrn, numCol;
     private string posteriorJsonFilePath = parameters.posteriorsJsonFilePath;
     public static Dictionary<string, Dictionary<string, float>> jsonData;
     private List<string> alphabets, cols, urn_answers, col_answers;
     private List<urnTable.UrnInfo> urnEntryList;
+    private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
+
 
     public void Start()
     {
@@ -32,6 +38,9 @@ public class practiceSubmitButtonColour : MonoBehaviour
         if (addToOne)
         {
             LockSliders();
+            responseTimeColourQuestion = Time.time - submitButtonUrn.startTimeColourQuestion;
+            RecordDataBothQuestions();
+            ExportData();
 
             ShowCorrectAnswer();
 
@@ -53,8 +62,11 @@ public class practiceSubmitButtonColour : MonoBehaviour
     private void DefineVar()
     {
         // slider container is at the same level as the submit button
+        urnSliderContainer = GameObject.Find("urnSliderContainer")?.transform;
         colourSliderContainer = transform.parent.Find("colourSliderContainer");
         submitButton.onClick.AddListener(OnClick);
+
+        submitButtonUrn = FindAnyObjectByType<practiceSubmitButtonUrn>();
 
         // sumToOneText is the child of the submit button
         sumToOneText = transform.Find("sumToOneText");
@@ -171,6 +183,62 @@ public class practiceSubmitButtonColour : MonoBehaviour
         yield return new WaitForSeconds(delay);
         clickButtonText.gameObject.SetActive(true);
         UnlockDrawButton();
+    }
+
+        
+    private void RecordDataBothQuestions()
+    {
+        seqBall = drawBalls.currentBallDraw;
+
+        Dictionary<string, object> data = new Dictionary<string, object>
+        {
+            { "participantID", participantID },
+            { "instanceName", instanceName },
+            { "seqBall", seqBall},
+            { "urnPosteriors", new List<float>() },
+            { "colourPosteriors", new List<float>() },
+            { "responseTimeUrn", submitButtonUrn.responseTimeUrnQuestion },
+            { "responseTimeColour", responseTimeColourQuestion }
+        };
+
+        bool firstSliderSkipped = false;
+        foreach (Transform child in urnSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                if (!firstSliderSkipped)
+                {
+                    firstSliderSkipped = true;
+                    continue;
+                }
+                
+                ((List<float>)data["urnPosteriors"]).Add(slider.value);
+            }
+        }
+
+        bool firstSliderSkippedColour = false;
+        foreach (Transform child in colourSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                if (!firstSliderSkippedColour)
+                {
+                    firstSliderSkippedColour = true;
+                    continue;
+                }
+
+                ((List<float>)data["colourPosteriors"]).Add(slider.value);
+            }
+        }
+
+        sliderValuesDict.Add(data);
+    }
+
+    private void ExportData()
+    {
+        string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
+        string filePath = Application.dataPath + "/participantData/"+participantID+instanceName+".json";
+        File.WriteAllText(filePath, json);
     }
 
 }

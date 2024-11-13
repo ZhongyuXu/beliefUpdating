@@ -11,7 +11,37 @@
       100.0,
       0.0
     ],
-    "responseTimeUrn": 2.361967,
-    "responseTimeColour": 3.647375
+    "responseTimeUrn": 1.4521848,
+    "responseTimeColour": 1.96117949
+  },
+  {
+    "participantID": "pTest",
+    "instanceName": "BUPractice",
+    "seqBall": 2,
+    "urnPosteriors": [
+      0.0,
+      100.0
+    ],
+    "colourPosteriors": [
+      0.0,
+      100.0
+    ],
+    "responseTimeUrn": 1.8720026,
+    "responseTimeColour": 1.276165
+  },
+  {
+    "participantID": "pTest",
+    "instanceName": "BUPractice",
+    "seqBall": 3,
+    "urnPosteriors": [
+      100.0,
+      0.0
+    ],
+    "colourPosteriors": [
+      0.0,
+      100.0
+    ],
+    "responseTimeUrn": 1.79429245,
+    "responseTimeColour": 1.39182091
   }
 ]
