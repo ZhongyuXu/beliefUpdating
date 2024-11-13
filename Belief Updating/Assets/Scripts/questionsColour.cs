@@ -13,7 +13,7 @@ public class questionsColour : MonoBehaviour
     private Transform colourSliderTemplate, colourSliderContainer;
     private List<string> ballCompList, ballColours;
     public float questionH = 65f;
-    private string jsonFilePath = parameters.jsonFilePath;
+    private string jsonFilePath = parameters.inputJsonFilePath;
     private object uniqueColorList;
     private urnTable urnTable;
 

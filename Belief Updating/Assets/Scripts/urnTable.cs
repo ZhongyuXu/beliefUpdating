@@ -10,9 +10,9 @@ public class urnTable : MonoBehaviour
     public string instanceNameMaster = "BU1";
     private Transform entryContainer;
     private Transform entryTemplate;
-    private List<UrnInfo> urnEntryList;
+    public List<UrnInfo> urnEntryList;
     private List<Transform> urnEntryTransformList;
-    private string jsonFilePath = parameters.jsonFilePath;
+    private string jsonFilePath = parameters.inputJsonFilePath;
 
     [System.Serializable]
    public class UrnInfo
@@ -29,7 +29,7 @@ public class urnTable : MonoBehaviour
         public string chosenUrn { get; set; }
         public List<string> ballDraws { get; set; }
     }
-    void Start()
+    void Awake()
     {
         entryContainer = transform.Find("urnEntryContainer");
         entryTemplate = entryContainer.Find("urnEntryTemplate");

@@ -38,7 +38,6 @@ public class submitButtonColour : MonoBehaviour
             // jump to next scene (instance) if no more balls to draw
             if (drawBalls.currentBallDraw == drawBalls.ballDrawsCount)
             {
-                // SceneManager.LoadScene(3);
                 sceneRandomizer.LoadNextScene();
             }
 

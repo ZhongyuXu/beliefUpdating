@@ -5,16 +5,16 @@ using UnityEngine;
 using Newtonsoft.Json;
 using UnityEngine.UI;
 
-public class drawBalls : MonoBehaviour
+public class practiceDrawBalls : MonoBehaviour
 {
     public string instanceName;
     public float timeDelaySecs = 1.0f, startTimeUrnQuestion;
-    public Button drawButton;
+    public Button drawButton, submitButton, urnSubmitButton;
     private List<string> ballDraws;
     public int currentBallDraw = 0, ballDrawsCount;
-    private Transform ballContainer;
+    private Transform ballContainer,urnAnswerText, colAnswerText, clickButtonText;
     public Transform urnQuestionCanvas, colourQuestionCanvas;
-    private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate;
+    private Transform blackTemplate, whiteTemplate, purpleTemplate, greenTemplate, urnSliderContainer, colourSliderContainer;
     private GameObject blackBallPrefab, whiteBallPrefab, purpleBallPrefab, greenBallPrefab;
 
     // Ball layout settings
@@ -59,6 +59,7 @@ public class drawBalls : MonoBehaviour
         
         if (currentBallDraw < ballDrawsCount)
         {
+            HideResetBothQuestions();
             string ballDraw = ballDraws[currentBallDraw];
             CreateBallDraws(ballDraw, ballContainer, currentBallDraw);
             currentBallDraw++;
@@ -114,6 +115,13 @@ public class drawBalls : MonoBehaviour
         colourQuestionCanvas = GameObject.Find("Colour Question Canvas")?.transform;
 
         drawButton.onClick.AddListener(OnClick);
+
+        urnSliderContainer = GameObject.Find("urnSliderContainer")?.transform;
+        colourSliderContainer = GameObject.Find("colourSliderContainer")?.transform;
+
+        urnAnswerText = GameObject.Find("urnAnswerText")?.transform;
+        colAnswerText = GameObject.Find("colAnswerText")?.transform;
+        clickButtonText = GameObject.Find("clickButtonText")?.transform;
     }
 
     private void HideTwoQuestions()
@@ -121,6 +129,57 @@ public class drawBalls : MonoBehaviour
         SetCanvasGroupVisibility(urnQuestionCanvas, false);
         SetCanvasGroupVisibility(colourQuestionCanvas, false);
     }
+
+    private void HideResetBothQuestions()
+    {
+        // Deactivate the Correct Answer Text from last round
+        urnAnswerText.gameObject.SetActive(false);
+        colAnswerText.gameObject.SetActive(false);
+
+        // hide clickButtonText
+        clickButtonText.gameObject.SetActive(false);
+        // hide both questions
+        HideTwoQuestions();
+
+        // reset the sliders to 0
+        foreach (Transform child in colourSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                slider.interactable = true;
+                slider.value = 0;
+                
+                // hide the cursor and slider text after submit for the first sequential ball draw
+                Transform _cursor = slider.transform.Find("Handle Slide Area");
+                Transform _fill = slider.transform.Find("Fill Area");
+                Transform _sliderText = slider.transform.Find("sliderText");
+
+                _cursor.gameObject.SetActive(false);
+                _fill.gameObject.SetActive(false);
+                _sliderText.gameObject.SetActive(false);
+            }
+        }
+        foreach (Transform child in urnSliderContainer)
+        {
+            if (child.TryGetComponent<Slider>(out Slider slider))
+            {
+                slider.interactable = true;
+                slider.value = 0;
+                
+                // hide the cursor and slider text after submit for the first sequential ball draw
+                Transform _cursor = slider.transform.Find("Handle Slide Area");
+                Transform _fill = slider.transform.Find("Fill Area");
+                Transform _sliderText = slider.transform.Find("sliderText");
+
+                _cursor.gameObject.SetActive(false);
+                _fill.gameObject.SetActive(false);
+                _sliderText.gameObject.SetActive(false);
+            }
+        }
+        // activate the submit button
+        submitButton.interactable = true;
+        urnSubmitButton.interactable = true;
+    }    
     public void SetCanvasGroupVisibility(Transform canvas, bool isVisible)
     {
         CanvasGroup canvasGroup = canvas.GetComponent<CanvasGroup>();

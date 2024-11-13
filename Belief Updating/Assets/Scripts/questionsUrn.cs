@@ -13,7 +13,7 @@ public class questionsUrn : MonoBehaviour
     private Transform urnSliderTemplate, urnSliderContainer;
     private List<UrnInfo> urnEntryList;
     public float questionH = 65f;
-    private string jsonFilePath = parameters.jsonFilePath;
+    private string jsonFilePath = parameters.inputJsonFilePath;
     private urnTable urnTable;
 
     [System.Serializable]

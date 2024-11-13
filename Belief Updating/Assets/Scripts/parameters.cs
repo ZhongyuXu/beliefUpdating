@@ -5,5 +5,6 @@ using UnityEngine;
 
 public class parameters : System.Object
 {
-    public static string jsonFilePath = "Assets/Resources/input.json";
+    public static string inputJsonFilePath = "Assets/Resources/input.json";
+    public static string posteriorsJsonFilePath = "Assets/Resources/obj_posteriors.json";
 }

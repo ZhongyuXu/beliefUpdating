@@ -19,7 +19,7 @@ public class urns : MonoBehaviour
     public float urnSpaceV = -110f;
     public float urnSpaceH = 100f;
     public int maxBallsPerRow = 4, maxUrnPerRow = 3;    // Maximum balls per row
-    private string jsonFilePath = parameters.jsonFilePath;
+    private string jsonFilePath = parameters.inputJsonFilePath;
     private urnTable urnTable;
 
     [System.Serializable]
