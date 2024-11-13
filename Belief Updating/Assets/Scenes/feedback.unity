@@ -584,7 +584,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1670663417}
-  - component: {fileID: 1670663416}
   m_Layer: 0
   m_Name: bonusContainer
   m_TagString: Untagged
@@ -592,18 +591,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1670663416
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1670663415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01808d987d43e42b8954f9da7f313eea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1670663417
 Transform:
   m_ObjectHideFlags: 0

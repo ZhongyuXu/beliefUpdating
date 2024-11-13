@@ -15,7 +15,9 @@ public class submitButtonColour : MonoBehaviour
     private urnTable urnTable;
     private submitButtonUrn submitButtonUrn;
     private SceneRandomizer sceneRandomizer;
-    private string participantID = "pTest", instanceName;
+    private pID pIDScript;
+
+    private string participantID, instanceName;
     private int seqBall;
     private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
     
@@ -50,6 +52,9 @@ public class submitButtonColour : MonoBehaviour
 
     private void DefineVar()
     {
+        pIDScript = FindObjectOfType<pID>();
+        participantID = pIDScript.participantID;
+
         // slider container is at the same level as the submit button
         urnSliderContainer = GameObject.Find("urnSliderContainer")?.transform;
         colourSliderContainer = transform.parent.Find("colourSliderContainer");
@@ -156,7 +161,7 @@ public class submitButtonColour : MonoBehaviour
     private void ExportData()
     {
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
-        string filePath = Application.dataPath + "/participantData/"+participantID+instanceName+".json";
+        string filePath = Application.dataPath + "/participantData/p"+participantID+instanceName+".json";
         File.WriteAllText(filePath, json);
     }
 

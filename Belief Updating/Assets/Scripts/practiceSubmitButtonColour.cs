@@ -16,8 +16,9 @@ public class practiceSubmitButtonColour : MonoBehaviour
     private urnTable urnTable;
     private SceneRandomizer sceneRandomizer;
     private practiceSubmitButtonUrn submitButtonUrn;
+    private pID pIDScript;
 
-    private string participantID = "pTest", instanceName;
+    private string participantID, instanceName;
     private int seqBall, numUrn, numCol;
     private string posteriorJsonFilePath = parameters.posteriorsJsonFilePath;
     public static Dictionary<string, Dictionary<string, float>> jsonData;
@@ -61,6 +62,9 @@ public class practiceSubmitButtonColour : MonoBehaviour
 
     private void DefineVar()
     {
+        pIDScript = FindObjectOfType<pID>();
+        participantID = pIDScript.participantID;
+
         // slider container is at the same level as the submit button
         urnSliderContainer = GameObject.Find("urnSliderContainer")?.transform;
         colourSliderContainer = transform.parent.Find("colourSliderContainer");
@@ -237,7 +241,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
     private void ExportData()
     {
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
-        string filePath = Application.dataPath + "/participantData/"+participantID+instanceName+".json";
+        string filePath = Application.dataPath + "/participantData/p"+participantID+instanceName+".json";
         File.WriteAllText(filePath, json);
     }
 

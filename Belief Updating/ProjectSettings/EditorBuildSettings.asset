@@ -9,9 +9,18 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   - enabled: 1
+    path: Assets/Scenes/pID.unity
+    guid: 37c5faca2c9394cab99746df122365d4
+  - enabled: 1
     path: Assets/Scenes/consentForm.unity
     guid: 04997b545139c430b9095a9413785e3d
   - enabled: 1
+    path: Assets/Scenes/PracticeRound.unity
+    guid: ea20f1726709d4c1bb6ef2bde8b13da6
+  - enabled: 1
+    path: Assets/Scenes/feedback.unity
+    guid: 2b7ee53377e8643cf9ca89bc159eb522
+  - enabled: 0
     path: Assets/Scenes/fixationCross.unity
     guid: 00f54abba468342b7b205f4d630cb548
   - enabled: 1
