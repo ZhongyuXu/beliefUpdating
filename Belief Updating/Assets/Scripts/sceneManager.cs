@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class SceneRandomizer : MonoBehaviour
 {
     // Scenes that shown upfront and not randomized
-    public int introScenesCount = 2;
+    public int introScenesCount;
     // List of randomized scene indices
     private List<int> sceneBuildIndices = new List<int>();
     private int currentSceneIndex = 0;
@@ -20,7 +20,7 @@ public class SceneRandomizer : MonoBehaviour
     void Start()
     {
         // Populate and shuffle the scene indices
-        for (int i = introScenesCount; i < SceneManager.sceneCountInBuildSettings; i++)
+        for (int i = 1; i < SceneManager.sceneCountInBuildSettings; i++)
         {
             sceneBuildIndices.Add(i);
         }
@@ -47,7 +47,7 @@ public class SceneRandomizer : MonoBehaviour
     // Shuffle method
     void ShuffleList<T>(List<T> list)
     {
-        for (int i = 0; i < list.Count; i++)
+        for (int i = introScenesCount; i < list.Count; i++)
         {
             int randomIndex = Random.Range(i, list.Count);
             T temp = list[i];
