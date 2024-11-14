@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 public class practiceSubmitButtonColour : MonoBehaviour
 {
     public Button submitButton, urnSubmitButton, drawButton;
-    public float delay=1.0f,responseTimeColourQuestion;
+    public float delay,responseTimeColourQuestion;
 
     private Transform sumToOneText,urnSliderContainer, colourSliderContainer, urnAnswerText, colAnswerText, clickButtonText;
     private practiceDrawBalls drawBalls;
@@ -50,7 +50,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
             // jump to next scene (instance) if no more balls to draw
             if (drawBalls.currentBallDraw == drawBalls.ballDrawsCount)
             {
-                sceneRandomizer.LoadNextScene();
+                StartCoroutine(ShowNextSceneWithDelay());
             }
 
         }
@@ -243,6 +243,12 @@ public class practiceSubmitButtonColour : MonoBehaviour
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
         string filePath = Application.dataPath + "/participantData/p"+participantID+instanceName+".json";
         File.WriteAllText(filePath, json);
+    }
+
+    private IEnumerator ShowNextSceneWithDelay()
+    {
+        yield return new WaitForSeconds(delay);
+        sceneRandomizer.LoadNextScene();
     }
 
 }

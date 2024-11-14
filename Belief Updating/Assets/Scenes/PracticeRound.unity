@@ -2901,7 +2901,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -570, y: -226}
+  m_AnchoredPosition: {x: -570, y: -35}
   m_SizeDelta: {x: 6500, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1164956675
@@ -2937,8 +2937,10 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: When you are ready, click button below to draw a  ball from the secretly
-    selected urn
+  m_Text: "Note: \n1. All balls will be drawn from the same selected urn for this
+    round\n2. The computer will put the ball drawn back before drawing the next ball\n\nWhen
+    you are ready, click the urn below to draw a  ball from the secretly selected
+    urn."
 --- !u!222 &1164956676
 CanvasRenderer:
   m_ObjectHideFlags: 0

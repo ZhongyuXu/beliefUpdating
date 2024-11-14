@@ -35,7 +35,7 @@ public class feedback : MonoBehaviour
 
         pIDScript = FindObjectOfType<pID>();
         // need to uncomment this line later
-        // participantID = pIDScript.participantID;
+        participantID = pIDScript.participantID;
     }
 
     private void ChangeText(float multiplier)
@@ -50,7 +50,7 @@ public class feedback : MonoBehaviour
         bonus1_reward = Mathf.Round(bonus1_reward * 100f) / 100f;
 
         bonus1.GetComponent<Text>().text = 
-        "Your reported there is " + bonus1_reported.ToString() + 
+        "You reported " + bonus1_reported.ToString() + 
         "% chance that the secretly selected urn being Urn A after the third ball draw.\nThe correct answer is " +
         bonus1_correct.ToString() + "%.\nYour first bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
         bonus1_reward.ToString() + ".";
@@ -65,9 +65,9 @@ public class feedback : MonoBehaviour
         bonus2_reward = Mathf.Round(bonus2_reward * 100f) / 100f;
 
         bonus2.GetComponent<Text>().text = 
-        "Your reported there is " + bonus2_reported.ToString() + 
+        "You reported " + bonus2_reported.ToString() + 
         "% chance that next ball draw colour being black after the second ball draw.\nThe correct answer is " +
-        bonus2_correct.ToString() + "%.\nYour second bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
+        bonus2_correct.ToString() + "%.\nYour second bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus2_reported.ToString() + " - " + bonus2_correct.ToString() + "|) = $" + 
         bonus2_reward.ToString() + ".";
 
         // Bonus 3 Colour White after the first ball draw. Black is the first colour in the list, white is the second
@@ -80,9 +80,9 @@ public class feedback : MonoBehaviour
         bonus3_reward = Mathf.Round(bonus3_reward * 100f) / 100f;
 
         bonus3.GetComponent<Text>().text = 
-        "Your reported there is " + bonus3_reported.ToString() + 
+        "You reported " + bonus3_reported.ToString() + 
         "% chance that next ball draw colour being white after the first ball draw.\nThe correct answer is " +
-        bonus3_correct.ToString() + "%.\nYour third bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
+        bonus3_correct.ToString() + "%.\nYour third bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus3_reported.ToString() + " - " + bonus3_correct.ToString() + "|) = $" + 
         bonus3_reward.ToString() + ".";
 
         // Bonus 4 Urn B after the second ball draw. 
@@ -95,9 +95,9 @@ public class feedback : MonoBehaviour
         bonus4_reward = Mathf.Round(bonus4_reward * 100f) / 100f;
 
         bonus4.GetComponent<Text>().text = 
-        "Your reported there is " + bonus4_reported.ToString() + 
+        "You reported " + bonus4_reported.ToString() + 
         "% chance that the secretly selected urn being Urn B after the second ball draw.\nThe correct answer is " +
-        bonus4_correct.ToString() + "%.\nYour fourth bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
+        bonus4_correct.ToString() + "%.\nYour fourth bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus4_reported.ToString() + " - " + bonus4_correct.ToString() + "|) = $" + 
         bonus4_reward.ToString() + ".";
 
         // Calculate final payoff
