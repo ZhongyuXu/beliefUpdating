@@ -21,7 +21,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
     private string participantID, instanceName;
     private int seqBall, numUrn, numCol;
     private string posteriorJsonFilePath = parameters.posteriorsJsonFilePath;
-    public static Dictionary<string, Dictionary<string, float>> jsonData;
+    public Dictionary<string, Dictionary<string, float>> jsonData;
     private List<string> alphabets, cols, urn_answers, col_answers;
     private List<urnTable.UrnInfo> urnEntryList;
     private List<Dictionary<string, object>> sliderValuesDict = new List<Dictionary<string, object>>();
