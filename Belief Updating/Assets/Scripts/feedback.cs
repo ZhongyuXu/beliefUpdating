@@ -9,7 +9,8 @@ public class feedback : MonoBehaviour
 {
     public float multiplier = 1f;
     private Transform bonus1, bonus2, bonus3, bonus4, finalPay;
-    private string participantID = "10086";
+    private Button nextButton;
+    private string participantID;
     private List<Dictionary<string, object>> reportedData;
     private Dictionary<string, Dictionary<string, float>> jsonData;
 
@@ -20,6 +21,11 @@ public class feedback : MonoBehaviour
     void Start()
     {
         DefineVar();
+        //deactivate next button on start
+        nextButton.interactable = false;
+        // activate next button after 10 seconds
+        StartCoroutine(ActivateNextButton());
+
         LoadReportedJson();
         LoadPosteriorJson();
         ChangeText(multiplier);
@@ -36,6 +42,14 @@ public class feedback : MonoBehaviour
         pIDScript = FindObjectOfType<pID>();
         // need to uncomment this line later
         participantID = pIDScript.participantID;
+
+        nextButton = GameObject.Find("NextButton").GetComponent<Button>();
+    }
+
+    private IEnumerator ActivateNextButton()
+    {
+        yield return new WaitForSeconds(10);
+        nextButton.interactable = true;
     }
 
     private void ChangeText(float multiplier)

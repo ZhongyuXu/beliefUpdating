@@ -15,6 +15,9 @@ EditorBuildSettings:
     path: Assets/Scenes/consentForm.unity
     guid: 04997b545139c430b9095a9413785e3d
   - enabled: 1
+    path: Assets/Scenes/comprehensionQuestions.unity
+    guid: a9e387b9ec2b8428fb20f42e929547cd
+  - enabled: 1
     path: Assets/Scenes/PracticeRound.unity
     guid: ea20f1726709d4c1bb6ef2bde8b13da6
   - enabled: 1

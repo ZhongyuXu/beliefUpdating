@@ -30,11 +30,11 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
+                "W",
                 "B",
-                "B",
-                "B"
+                "W"
             ]
         }
     },
@@ -71,9 +71,9 @@
             ],
             "chosenUrn": "A",
             "ballDraws": [
-                "W",
                 "B",
-                "W"
+                "B",
+                "B"
             ]
         }
     },
@@ -111,11 +111,11 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
-                "P",
+                "W",
                 "B",
-                "P"
+                "B"
             ]
         }
     },
@@ -153,11 +153,11 @@
                     "balls": 20
                 }
             ],
-            "chosenUrn": "B",
+            "chosenUrn": "A",
             "ballDraws": [
-                "P",
-                "P",
-                "P"
+                "B",
+                "W",
+                "B"
             ]
         }
     },
@@ -200,9 +200,9 @@
             ],
             "chosenUrn": "B",
             "ballDraws": [
-                "W",
+                "P",
                 "G",
-                "P"
+                "G"
             ]
         }
     },
@@ -247,7 +247,7 @@
             "ballDraws": [
                 "B",
                 "B",
-                "P"
+                "W"
             ]
         }
     },
@@ -293,8 +293,8 @@
             ],
             "chosenUrn": "B",
             "ballDraws": [
-                "B",
-                "B",
+                "W",
+                "W",
                 "B"
             ]
         }
@@ -343,7 +343,7 @@
             "ballDraws": [
                 "B",
                 "B",
-                "B"
+                "W"
             ]
         }
     },
@@ -391,10 +391,10 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "C",
             "ballDraws": [
-                "B",
-                "B",
+                "P",
+                "P",
                 "B"
             ]
         }
@@ -443,10 +443,10 @@
                     "balls": 30
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
                 "W",
-                "B",
+                "W",
                 "W"
             ]
         }
@@ -501,8 +501,8 @@
             ],
             "chosenUrn": "C",
             "ballDraws": [
+                "P",
                 "G",
-                "B",
                 "G"
             ]
         }
@@ -557,7 +557,7 @@
             ],
             "chosenUrn": "A",
             "ballDraws": [
-                "W",
+                "B",
                 "B",
                 "W"
             ]
@@ -615,7 +615,7 @@
             "chosenUrn": "C",
             "ballDraws": [
                 "B",
-                "B",
+                "W",
                 "W"
             ]
         }
@@ -669,11 +669,11 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "B",
             "ballDraws": [
-                "B",
                 "W",
-                "W"
+                "W",
+                "B"
             ]
         }
     },
@@ -733,8 +733,8 @@
             ],
             "chosenUrn": "D",
             "ballDraws": [
-                "B",
                 "W",
+                "B",
                 "P"
             ]
         }
@@ -793,11 +793,11 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "D",
+            "chosenUrn": "C",
             "ballDraws": [
                 "B",
-                "W",
-                "B"
+                "P",
+                "P"
             ]
         }
     },
@@ -862,9 +862,9 @@
             ],
             "chosenUrn": "B",
             "ballDraws": [
+                "G",
                 "W",
-                "B",
-                "W"
+                "G"
             ]
         }
     },
@@ -927,10 +927,10 @@
                     "balls": 40
                 }
             ],
-            "chosenUrn": "A",
+            "chosenUrn": "D",
             "ballDraws": [
-                "B",
-                "W",
+                "G",
+                "P",
                 "P"
             ]
         }
@@ -969,7 +969,7 @@
             "chosenUrn": "B",
             "ballDraws": [
                 "W",
-                "B",
+                "W",
                 "W"
             ]
         }
