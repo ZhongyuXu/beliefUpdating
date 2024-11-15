@@ -8,11 +8,11 @@
       0.0
     ],
     "colourPosteriors": [
-      100.0,
-      0.0
+      0.0,
+      100.0
     ],
-    "responseTimeUrn": 1.1896286,
-    "responseTimeColour": 1.30535126
+    "responseTimeUrn": 1.76116943,
+    "responseTimeColour": 3.119934
   },
   {
     "participantID": "10086",
@@ -26,8 +26,8 @@
       100.0,
       0.0
     ],
-    "responseTimeUrn": 1.23275757,
-    "responseTimeColour": 1.24904633
+    "responseTimeUrn": 1.81048584,
+    "responseTimeColour": 2.22885132
   },
   {
     "participantID": "10086",
@@ -41,7 +41,7 @@
       100.0,
       0.0
     ],
-    "responseTimeUrn": 0.843734741,
-    "responseTimeColour": 1.10585785
+    "responseTimeUrn": 1.46862793,
+    "responseTimeColour": 1.24429321
   }
 ]

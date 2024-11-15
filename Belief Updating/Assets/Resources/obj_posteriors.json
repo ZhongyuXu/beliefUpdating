@@ -360,17 +360,17 @@
         "posterior_col4_draw3": 0.33
     },
     "BUPractice": {
-        "posterior_u1_draw1": 0.3,
-        "posterior_u2_draw1": 0.7,
-        "posterior_u1_draw2": 0.16,
-        "posterior_u2_draw2": 0.84,
-        "posterior_u1_draw3": 0.07,
-        "posterior_u2_draw3": 0.93,
-        "posterior_col1_draw1": 0.42,
-        "posterior_col2_draw1": 0.58,
-        "posterior_col1_draw2": 0.36,
-        "posterior_col2_draw2": 0.64,
-        "posterior_col1_draw3": 0.33,
-        "posterior_col2_draw3": 0.67
+        "posterior_u1_draw1": 0.4,
+        "posterior_u2_draw1": 0.6,
+        "posterior_u1_draw2": 0.31,
+        "posterior_u2_draw2": 0.69,
+        "posterior_u1_draw3": 0.23,
+        "posterior_u2_draw3": 0.77,
+        "posterior_col1_draw1": 0.48,
+        "posterior_col2_draw1": 0.52,
+        "posterior_col1_draw2": 0.46,
+        "posterior_col2_draw2": 0.54,
+        "posterior_col1_draw3": 0.45,
+        "posterior_col2_draw3": 0.55
     }
 }

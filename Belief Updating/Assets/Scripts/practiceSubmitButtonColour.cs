@@ -166,7 +166,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
 
 
         colAnswerText.gameObject.SetActive(true);
-        cols = new List<string> { "White", "Black", "Purple", "Green"};
+        cols = new List<string> { "Black", "White", "Purple", "Green"};
         col_answers = new List<string>();
         for (int i = 0; i < numCol; i++)
         {
