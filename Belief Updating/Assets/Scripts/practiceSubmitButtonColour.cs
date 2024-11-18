@@ -241,7 +241,20 @@ public class practiceSubmitButtonColour : MonoBehaviour
     private void ExportData()
     {
         string json = JsonConvert.SerializeObject(sliderValuesDict, Formatting.Indented);
-        string filePath = Application.dataPath + "/participantData/p"+participantID+instanceName+".json";
+
+        string directoryPath = parameters.expDataJsonFilePath;
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+        string filePath = directoryPath + "p" + participantID + instanceName + ".json";
+        
+        // int suffix = 1;
+        // while (File.Exists(filePath))
+        // {
+        //     filePath = directoryPath + "p" + participantID + instanceName + "_" + suffix + ".json";
+        //     suffix++;
+        // }
         File.WriteAllText(filePath, json);
     }
 

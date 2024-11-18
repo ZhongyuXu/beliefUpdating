@@ -78,6 +78,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Scene18.unity
     guid: 5773284e3b38b4d569d2de29a2c9afad
   - enabled: 1
+    path: Assets/Scenes/demographic.unity
+    guid: 9a8f36d9d58c5414c8f331df2f0e45be
+  - enabled: 1
     path: Assets/Scenes/end.unity
     guid: 2e0ba4c6368a445f4a75b02e3b9b566a
   - enabled: 1
