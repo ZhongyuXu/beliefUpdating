@@ -1,0 +1,17 @@
+[
+  {
+    "participantID": "10088",
+    "instanceName": "BUPractice",
+    "seqBall": 1,
+    "urnPosteriors": [
+      100.0,
+      0.0
+    ],
+    "colourPosteriors": [
+      100.0,
+      0.0
+    ],
+    "responseTimeUrn": 1.25872421,
+    "responseTimeColour": 1.5549202
+  }
+]

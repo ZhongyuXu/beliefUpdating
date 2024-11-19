@@ -159,7 +159,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
         for (int i = 0; i < numUrn; i++)
         {
             urn_answers.Add( "Urn " + alphabets[i] + ": " +
-                jsonData[instanceName]["posterior_u" + (i+1).ToString() + "_draw" + seqBall.ToString()].ToString());
+                (jsonData[instanceName]["posterior_u" + (i+1).ToString() + "_draw" + seqBall.ToString()]*100).ToString() + "%");
         }
 
         urnAnswerText.GetComponent<Text>().text = "The correct answer is: " + string.Join(", ", urn_answers);
@@ -171,7 +171,7 @@ public class practiceSubmitButtonColour : MonoBehaviour
         for (int i = 0; i < numCol; i++)
         {
             col_answers.Add( cols[i] + ": " +
-                jsonData[instanceName]["posterior_col" + (i+1).ToString() + "_draw" + seqBall.ToString()].ToString());
+                (jsonData[instanceName]["posterior_col" + (i+1).ToString() + "_draw" + seqBall.ToString()]*100).ToString() + "%");
         }
 
         colAnswerText.GetComponent<Text>().text = "The correct answer is: " + string.Join(", ", col_answers);
