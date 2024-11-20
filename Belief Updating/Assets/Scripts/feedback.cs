@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class feedback : MonoBehaviour
 {
     public float multiplier = 1f;
-    private Transform bonus1, bonus2, bonus3, bonus4, finalPay;
+    private Transform bonus1, bonus2, bonus3, bonus4, finalPay, bonus1Calculation, bonus2Calculation, bonus3Calculation, bonus4Calculation;
     private Button nextButton;
     private string participantID;
     private List<Dictionary<string, object>> reportedData;
@@ -38,6 +38,10 @@ public class feedback : MonoBehaviour
         bonus3 = GameObject.Find("bonus3")?.transform;
         bonus4 = GameObject.Find("bonus4")?.transform;
         finalPay = GameObject.Find("finalPay")?.transform;
+        bonus1Calculation = GameObject.Find("bonus1Calculation")?.transform;
+        bonus2Calculation = GameObject.Find("bonus2Calculation")?.transform;
+        bonus3Calculation = GameObject.Find("bonus3Calculation")?.transform;
+        bonus4Calculation = GameObject.Find("bonus4Calculation")?.transform;
 
         pIDScript = FindObjectOfType<pID>();
         // need to uncomment this line later
@@ -66,7 +70,9 @@ public class feedback : MonoBehaviour
         bonus1.GetComponent<Text>().text = 
         "You reported " + bonus1_reported.ToString() + 
         "% chance that the secretly selected urn being Urn A after the third ball draw.\nThe correct answer is " +
-        bonus1_correct.ToString() + "%.\nYour first bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
+        bonus1_correct.ToString() + "%.";
+
+        bonus1Calculation.GetComponent<Text>().text = "Your first bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus1_reported.ToString() + " - " + bonus1_correct.ToString() + "|) = $" + 
         bonus1_reward.ToString() + ".";
 
         // Bonus 2 Colour Black after the second ball draw. Black is the first colour in the list, white is the second
@@ -81,7 +87,9 @@ public class feedback : MonoBehaviour
         bonus2.GetComponent<Text>().text = 
         "You reported " + bonus2_reported.ToString() + 
         "% chance that next ball draw colour being black after the second ball draw.\nThe correct answer is " +
-        bonus2_correct.ToString() + "%.\nYour second bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus2_reported.ToString() + " - " + bonus2_correct.ToString() + "|) = $" + 
+        bonus2_correct.ToString() + "%.";
+
+        bonus2Calculation.GetComponent<Text>().text = "Your second bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus2_reported.ToString() + " - " + bonus2_correct.ToString() + "|) = $" + 
         bonus2_reward.ToString() + ".";
 
         // Bonus 3 Colour White after the first ball draw. Black is the first colour in the list, white is the second
@@ -96,7 +104,9 @@ public class feedback : MonoBehaviour
         bonus3.GetComponent<Text>().text = 
         "You reported " + bonus3_reported.ToString() + 
         "% chance that next ball draw colour being white after the first ball draw.\nThe correct answer is " +
-        bonus3_correct.ToString() + "%.\nYour third bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus3_reported.ToString() + " - " + bonus3_correct.ToString() + "|) = $" + 
+        bonus3_correct.ToString() + "%.";
+
+        bonus3Calculation.GetComponent<Text>().text = "Your third bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus3_reported.ToString() + " - " + bonus3_correct.ToString() + "|) = $" + 
         bonus3_reward.ToString() + ".";
 
         // Bonus 4 Urn B after the second ball draw. 
@@ -111,7 +121,9 @@ public class feedback : MonoBehaviour
         bonus4.GetComponent<Text>().text = 
         "You reported " + bonus4_reported.ToString() + 
         "% chance that the secretly selected urn being Urn B after the second ball draw.\nThe correct answer is " +
-        bonus4_correct.ToString() + "%.\nYour fourth bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus4_reported.ToString() + " - " + bonus4_correct.ToString() + "|) = $" + 
+        bonus4_correct.ToString() + "%.";
+
+        bonus4Calculation.GetComponent<Text>().text = "Your fourth bonus is max($0, $10 -" + multiplier.ToString() + "*|" +  bonus4_reported.ToString() + " - " + bonus4_correct.ToString() + "|) = $" + 
         bonus4_reward.ToString() + ".";
 
         // Calculate final payoff
