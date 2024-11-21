@@ -9,7 +9,7 @@ using UnityEditor;
 
 public class password : MonoBehaviour
 {
-    private string correctPwd = "2345";
+    public string correctPwd = "2345";
     private Button passwordButton;
     private TMP_InputField passwordInput;
     public string participantID;
