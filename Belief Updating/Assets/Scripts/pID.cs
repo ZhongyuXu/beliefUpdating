@@ -72,6 +72,7 @@ public class pID : MonoBehaviour
             // ID is unique, add to the collection
             File.AppendAllText(filePath, inputID+"\n");
             Debug.Log("Participant ID: " + participantID);
+            ExportInstanceSequence(inputID);
             sceneRandomizer.LoadNextScene();
         }
     }
@@ -83,6 +84,17 @@ public class pID : MonoBehaviour
             {
                 participantIDs.Add(id.Trim());
             }
+    }
+
+    private void ExportInstanceSequence(string id)
+    {
+        string seqfilePath = parameters.expDataJsonFilePath + "p" + id + "_instanceSequence.txt";
+        if (!File.Exists(seqfilePath))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(seqfilePath));
+            File.Create(seqfilePath).Dispose();
+        }
+        File.WriteAllLines(seqfilePath, sceneRandomizer.sceneList);
     }
 
 }

@@ -12,6 +12,7 @@ public class SceneRandomizer : MonoBehaviour
     private List<int> sceneBuildIndices = new List<int>();
     private int currentSceneIndex = 0;
     private float delayTime = 1.0f;
+    public List<string> sceneList;
 
     void Awake()
     {
@@ -55,6 +56,7 @@ public class SceneRandomizer : MonoBehaviour
             list[randomIndex] = temp;
         }
         Debug.Log("List shuffled: " + string.Join(", ", list));
+        sceneList = list.ConvertAll(x => x.ToString());
     }
 
     private IEnumerator ShowNextSceneWithDelay()
