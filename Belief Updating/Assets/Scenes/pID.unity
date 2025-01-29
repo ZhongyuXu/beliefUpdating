@@ -463,7 +463,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 543984593704532197, guid: 0df972fbf05d741f2be8f1cb05f5233e, type: 3}
       propertyPath: m_ScreenMatchMode
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4765022063315572911, guid: 0df972fbf05d741f2be8f1cb05f5233e, type: 3}
       propertyPath: m_Pivot.x
@@ -1003,6 +1003,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   introScenesCount: 6
   outroScenesCount: 3
+  sceneList: []
 --- !u!4 &1571733993
 Transform:
   m_ObjectHideFlags: 0

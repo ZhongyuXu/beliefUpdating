@@ -185,16 +185,16 @@ public class submitButtonColour : MonoBehaviour
             if (child.TryGetComponent<Slider>(out Slider slider))
             {
                 slider.interactable = true;
-                slider.value = 0;
+                // slider.value = 0;
                 
-                // hide the cursor and slider text after submit for the first sequential ball draw
-                Transform _cursor = slider.transform.Find("Handle Slide Area");
-                Transform _fill = slider.transform.Find("Fill Area");
-                Transform _sliderText = slider.transform.Find("sliderText");
+                // // hide the cursor and slider text after submit for the first sequential ball draw
+                // Transform _cursor = slider.transform.Find("Handle Slide Area");
+                // Transform _fill = slider.transform.Find("Fill Area");
+                // Transform _sliderText = slider.transform.Find("sliderText");
 
-                _cursor.gameObject.SetActive(false);
-                _fill.gameObject.SetActive(false);
-                _sliderText.gameObject.SetActive(false);
+                // _cursor.gameObject.SetActive(false);
+                // _fill.gameObject.SetActive(false);
+                // _sliderText.gameObject.SetActive(false);
             }
         }
         foreach (Transform child in urnSliderContainer)
@@ -202,16 +202,16 @@ public class submitButtonColour : MonoBehaviour
             if (child.TryGetComponent<Slider>(out Slider slider))
             {
                 slider.interactable = true;
-                slider.value = 0;
+                // slider.value = 0;
                 
-                // hide the cursor and slider text after submit for the first sequential ball draw
-                Transform _cursor = slider.transform.Find("Handle Slide Area");
-                Transform _fill = slider.transform.Find("Fill Area");
-                Transform _sliderText = slider.transform.Find("sliderText");
+                // // hide the cursor and slider text after submit for the first sequential ball draw
+                // Transform _cursor = slider.transform.Find("Handle Slide Area");
+                // Transform _fill = slider.transform.Find("Fill Area");
+                // Transform _sliderText = slider.transform.Find("sliderText");
 
-                _cursor.gameObject.SetActive(false);
-                _fill.gameObject.SetActive(false);
-                _sliderText.gameObject.SetActive(false);
+                // _cursor.gameObject.SetActive(false);
+                // _fill.gameObject.SetActive(false);
+                // _sliderText.gameObject.SetActive(false);
             }
         }
         // activate the submit button
