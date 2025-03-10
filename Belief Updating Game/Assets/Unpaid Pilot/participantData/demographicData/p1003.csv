@@ -1,0 +1,2 @@
+participantID,payID,fullName,age,sex,probSubject,bayesFamaliar,bayesInExp,strategy
+1003,000,Michelle,27,Female,Yes,Yes,Sometimes,Update belief according to the new ball draw. 

@@ -1,0 +1,19 @@
+[
+  {
+    "participantID": "1001",
+    "instanceName": "BU13",
+    "seqBall": 1,
+    "urnPosteriors": [
+      35.0,
+      30.0,
+      20.0,
+      15.0
+    ],
+    "colourPosteriors": [
+      64.0,
+      36.0
+    ],
+    "responseTimeUrn": 74.93738,
+    "responseTimeColour": 42.1635742
+  }
+]

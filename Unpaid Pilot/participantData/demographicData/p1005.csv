@@ -1,0 +1,2 @@
+participantID,payID,fullName,age,sex,probSubject,bayesFamaliar,bayesInExp,strategy
+1005,1234 123 123,Cf,23,Male,No,No,Never,abc
