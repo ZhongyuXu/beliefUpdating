@@ -1,0 +1,592 @@
+---
+title: "Bayesian Regressions"
+output: html_document
+date: "2025-03-21"
+---
+
+```{r setup, include=FALSE}
+#install.packages("brms","dplyr")
+#install.packages("devtools")
+#devtools::install_github("tidyverse/tidyverse")
+#devtools::install_github("thomasp85/gganimate")
+
+knitr::opts_chunk$set(echo = TRUE)
+library(brms)
+library(dplyr)
+library(tidyverse)
+library(gganimate)
+library(bayesplot)
+```
+
+# Read Data
+
+```{r}
+setwd("~/OneDrive - The University of Melbourne/Bayesian Updating and Complexity/Code/Analysis")
+
+participant_data <- read.csv("participant_data.csv")
+
+
+```
+# Generate Synthetic data
+```{r}
+# Set seed for reproducibility
+set.seed(12)
+
+# Function to add small random noise to selected columns in the dataset
+add_noise <- function(data, noise_sd = 0) {
+  data %>%
+    mutate(
+      responseTimeUrn = responseTimeUrn + rnorm(n(), mean = 0, sd = noise_sd),
+      responseTimeColour = responseTimeColour + rnorm(n(), mean = 0, sd = noise_sd),
+      DQ_U_o = DQ_U_o + rnorm(n(), mean = 0, sd = noise_sd),
+      DQ_C_o = DQ_C_o + rnorm(n(), mean = 0, sd = noise_sd),
+      DQ_U_s = DQ_U_s + rnorm(n(), mean = 0, sd = noise_sd),
+      DQ_C_s = DQ_C_s + rnorm(n(), mean = 0, sd = noise_sd)
+    )
+}
+
+# Create three synthetic datasets by duplicating the original data and adding noise
+synthetic_data_list <- lapply(1:3, function(i) {
+  synthetic <- add_noise(participant_data, noise_sd = 0)
+  # Optionally, modify the participantID to reflect the synthetic duplication.
+  synthetic <- synthetic %>%
+    mutate(participantID = paste0(participantID, "_synth", i))
+  return(synthetic)
+})
+
+# Combine the original dataset with the synthetic datasets
+combined_data <- rbind(
+  participant_data,
+  synthetic_data_list[[1]],
+  synthetic_data_list[[2]],
+  synthetic_data_list[[3]]
+)
+
+
+
+```
+
+```{r}
+# Transform the response variable to be strictly within (0, 1)
+# This transformation handles any 0's or 1's in your DQ_U_o variable.
+n <- nrow(combined_data)
+combined_data <- combined_data %>%
+  mutate(DQ_U_o_trans = (DQ_U_o * (n - 1) + 0.5) / n)
+
+n <- nrow(participant_data)
+participant_data <- participant_data %>%
+  mutate(DQ_U_o_trans = (DQ_U_o * (n - 1) + 0.5) / n)
+
+participant_data <- participant_data %>%
+  mutate(
+    urns_trans    = as.numeric(scale(urns)),
+    colours_trans = as.numeric(scale(colours)),
+    seqBall_trans = as.numeric(scale(seqBall))
+  )
+
+```
+
+
+```{r}
+
+
+# 1. Sample 10 precision parameters from Gamma(2, 0.1)
+#set.seed(123)  # for reproducibility
+phi_samples <- rgamma(10, shape = 10, rate = 1)
+phi_samples  # display the sampled phi values
+
+# 2. Set the desired Beta mean and compute corresponding alpha and beta for each phi
+mu <- 0.85  # target mean
+# For a Beta distribution with mean mu and precision phi, we have:
+#   alpha = mu * phi
+#   beta  = (1 - mu) * phi
+
+# 3. Create a data frame with x values and the density for each sampled phi
+x_seq <- seq(0, 1, length.out = 200)  # x values between 0 and 1
+beta_curves <- map_dfr(seq_along(phi_samples), function(i) {
+  phi <- phi_samples[i]
+  alpha <- mu * phi
+  beta_param <- (1 - mu) * phi
+  density <- dbeta(x_seq, shape1 = alpha, shape2 = beta_param)
+  tibble(
+    x = x_seq,
+    density = density,
+    phi = round(phi, 2),
+    curve = paste("Curve", i)
+  )
+})
+
+summary(beta_curves)
+
+curves_subset_1 <- subset(beta_curves, curve == "Curve 10")
+
+# Create the combined plot
+ggplot() +
+  # Plot the Beta density curve from the simulation (Curve 1)
+  geom_line(data = curves_subset_1, aes(x = x, y = density, color = curve), size = 1) +
+  # Optional: add text label with phi at the maximum density point for Curve 1
+  geom_text(data = curves_subset_1 %>% 
+              group_by(curve) %>% 
+              filter(density == max(density)),
+            aes(x = x, y = density, label = paste("phi =", phi)),
+            vjust = -0.5, show.legend = FALSE) +
+  # Plot the density of participant_data$DQ_U_o
+  geom_density(data = participant_data, 
+               aes(x = DQ_U_o, color = "DQ_U_o"), size = 1, adjust = 1) +
+  # Plot the density of participant_data$DQ_C_o
+  geom_density(data = participant_data, 
+               aes(x = DQ_C_o, color = "DQ_C_o"), size = 1, adjust = 1) +
+  labs(title = "Beta Density (Curve 1) with Observed Densities",
+       x = "x",
+       y = "Density",
+       color = "Legend") +
+  theme_minimal()
+```
+
+
+
+
+# H1-B
+
+In the state updating question, decision quality does not decrease as the number of potential signals (number of possible colors) in an instance increase, since more potential signals does not increase computational complexity.
+
+Beta distribution requires outcomes to be strictly between 0 and 1. Even if your response is exactly 1 (or 0), it violates that assumption. A common fix is to transform the response so that values are mapped into the open interval (0,1). One popular transformation is:
+
+y\^\* = \frac{y * (n - 1) + 0.5} {n}
+
+where n is the number of observations. This gently "squeezes" the 0's and 1's into the interval (0,1) without distorting the data too much.
+
+## Visualising H1-B using random intercept simple linear regressions
+```{r}
+# Simple linear regression (pooled across participants)
+ggplot(participant_data, aes(x = colours, y = DQ_U_o_trans)) +
+  # Single global regression line in black
+  geom_smooth(
+    data = participant_data, 
+    aes(x = colours, y = DQ_U_o_trans),
+    method = "lm", 
+    inherit.aes = FALSE, 
+    se = FALSE, 
+    color = "black", 
+    linewidth = 0.9
+  ) +
+  # Points
+  geom_point(aes(x = colours, y = DQ_U_o_trans)) +
+  labs(
+    x = "colours",
+    y = "DQ_U_o_trans"
+  ) +
+  theme_minimal()
+
+
+# Convert participantID to character in base R
+participant_data$participantID <- as.character(participant_data$participantID)
+# Multiple regressions by participant
+ggplot(participant_data, aes(x = colours, y = DQ_U_o_trans, color = participantID)) +
+  # One regression line per participant (colored by participantID)
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    linewidth = 0.9
+  ) +
+  # Points (also colored by participantID)
+  geom_point() +
+  labs(
+    x = "colours",
+    y = "DQ_U_o_trans"
+  ) +
+  theme_minimal()
+```
+
+## Prior Predictive Checks
+```{r}
+# Set seed and initialize df
+seed_nums <- 1:10
+
+sim_df <- tibble(
+  sim_no = integer(),
+  y_observed = numeric(),
+  y_sim = numeric()
+)
+
+for (i in seed_nums) {
+  set.seed(i)
+  
+  # Variance / standard deviation priors for row-level noise
+  #sigma0 <- abs(rnorm(1, mean = 0, sd = 100))  # ensure sigma0 is nonnegative
+  #sigma  <- abs(rnorm(nrow(participant_data), mean = 0, sd = sigma0))
+  # Use participant_data (not bounce_data) for epsilon:
+  #epsilon <- rnorm(nrow(participant_data), mean = 0, sd = sigma)
+  
+  # Fixed effects priors
+  b0 <- rnorm(1, mean = 0, sd = 1)       # Global intercept
+  FE <- rnorm(3, mean = 0, sd = 1)        # Slopes for 3 fixed effects
+  ## Precision parameter phi from Gamma(2, 0.1)
+  phi <- rgamma(10, shape = 10, rate = 1)
+  # Random intercept with a half-Cauchy(0,1) prior on its SD
+  # Draw SD from a half-Cauchy by taking the absolute value of rcauchy(0,1)
+  #b0_sd <- abs(rnorm(1,mean = 0, sd = 0.1))
+  b0_sd <- abs(rcauchy(1, location = 0, scale = 1))
+  
+  
+  
+  # Draw participant-specific intercepts from N(0, b0_sd)
+  participantIDs <- unique(participant_data$participantID)
+  b0_re <- rnorm(length(participantIDs), mean = 0, sd = b0_sd)
+  
+  # Match each row in participant_data to the correct participant intercept
+  id_idx <- match(participant_data$participantID, participantIDs)
+  
+  # Linear predictor (example):
+  # Global intercept + participant-specific intercept + slopes for predictors + noise
+ ## Linear predictor (eta)
+  # Note: no additive error term here; variability comes from the Beta distribution
+  eta <- b0 + b0_re[id_idx] +
+         FE[1] * participant_data$urns_trans +
+         FE[2] * participant_data$colours_trans +
+         FE[3] * participant_data$seqBall_trans
+  
+  # Transform linear predictor using logistic function to obtain mu in (0,1)
+  mu <- 1 / (1 + exp(-eta))
+  
+  # Calculate Beta distribution parameters for each row
+  alpha_param <- mu * phi
+  beta_param <- (1 - mu) * phi
+  
+  # Simulate yhat from the Beta distribution for each observation
+  yhat <- rbeta(nrow(participant_data), shape1 = alpha_param, shape2 = beta_param)
+  
+  # Store the results for this simulation
+  sims <- tibble(
+    sim_no = i,
+    y_observed = participant_data$DQ_U_o_trans,
+    y_sim = yhat
+  )
+  
+  # Append to the main data frame
+  sim_df <- bind_rows(sim_df, sims)
+}
+
+head(sim_df)
+
+# Create an animated plot showing how observed vs. simulated data changes
+# across different simulation runs.
+p <- ggplot(sim_df, aes(x = y_observed, y = y_sim)) +
+  geom_point() +
+  ggtitle("Simulation #: {closest_state}") +
+  labs(
+    x = "Observed (DQ_U_o_trans)",
+    y = "Simulated (Beta regression)"
+  ) +
+  theme_minimal() +
+  theme(title = element_text(size = 7)) +
+  transition_states(
+    as.factor(sim_no),
+    transition_length = 1,
+    state_length = 10
+  ) +
+  view_follow()
+
+# Render the animation and display it (works well in RStudio)
+anim <- animate(
+  p,
+  nframes = 100,          # total frames in the animation
+  fps = 10,               # frames per second
+  #width = 1200,            # width in pixels
+  #height = 800,           # height in pixels
+  res = 150,              # resolution in dpi
+  renderer = gifski_renderer()
+)
+anim 
+```
+```{r}
+# install.packages("gganimate")   # if you haven't already
+#library(ggplot2)
+#library(gganimate)
+
+
+```
+
+
+
+
+```{r}
+# Regression 1
+
+
+
+# Define priors for the model:
+# - Fixed effects (slopes and intercept): Normal(0, 5)
+# - Random intercept standard deviation: Half-Cauchy(0, 1)
+# - Beta precision parameter (phi): Gamma(2, 0.1)
+priors <- c(
+  set_prior("normal(0, 100)", class = "b"),
+  set_prior("normal(0, 100)", class = "Intercept"),
+  set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+  #set_prior("normal(0, 1)", class = "sd", lb = 0),
+  set_prior("gamma(10, 1)", class = "phi")
+)
+
+
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+model_1 <- brm(
+  formula = DQ_U_o_trans ~ urns_trans + colours_trans + seqBall_trans + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+#  cores = 4,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95)
+)
+
+model_2 <- brm(
+  formula = DQ_U_o_trans ~ urns_trans + seqBall_trans + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+#  cores = 4,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95)
+)
+
+```
+
+
+
+```{r}
+# Plot the parameters
+#print(plot(model_1))
+
+# Diagnostic plots
+library(bayesplot)
+library(ggplot2)
+library(dplyr)
+
+#--------------------------------------------------
+# 1. Pair Plot for Visual Diagnosis of Divergences
+#--------------------------------------------------
+
+# Convert the model's posterior draws to an array
+post_array <- as.array(model_1)
+
+# Choose a set of parameters to inspect.
+# Here, we select the global intercept, slopes for your standardized predictors,
+# the random intercept SD, and the precision parameter phi.
+pars_to_plot <- c("b_colours_trans", 
+                    "sd_participantID__Intercept", "phi")
+
+# Create the pair plot
+mcmc_pairs(post_array, pars = pars_to_plot)
+# This plot will help you inspect parameter correlations and potential divergent transitions.
+
+#--------------------------------------------------
+# 2. Fitted (Predicted) vs. Observed Plot
+#--------------------------------------------------
+
+# Extract fitted values from the model
+# 'fitted()' returns a matrix with the estimate, and lower/upper credible intervals.
+fitted_vals <- fitted(model_1)[, "Estimate"]
+
+# Create a data frame that pairs the fitted values with the observed values.
+plot_df <- participant_data %>% 
+  mutate(fitted = fitted_vals)
+
+# Plot the observed DQ_U_o_trans vs. the fitted (predicted) values.
+ggplot(plot_df, aes(x = DQ_U_o_trans, y = fitted)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Fitted vs Observed DQ_U_o_trans",
+       x = "Observed DQ_U_o_trans",
+       y = "Fitted (Predicted) DQ_U_o_trans") +
+  theme_minimal()
+
+
+
+# Create a parallel coordinates plot
+mcmc_parcoord(
+  as.matrix(model_2),
+  pars = vars(-lp__),  # plot all parameters except the log posterior
+  np = nuts_params(model_2),      # add sampler diagnostics
+  np_style = scatter_style_np(
+    div_color = "green", 
+    div_size = 0.25, 
+    div_alpha = 0.9
+  )
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+posterior_draws <- as.matrix(model_1)
+
+# Extract NUTS sampler diagnostics (for identifying divergences, etc.)
+nuts_info <- nuts_params(model_1)
+
+# Example: Bivariate scatter of the slopes for 'urns_trans' and 'colours_trans'
+mcmc_scatter(
+  posterior_draws,
+  pars = vars(contains("urns_trans"), contains("colours_trans")),
+  np = nuts_info,
+  np_style = scatter_style_np(
+    div_color = "green",  # color for divergent points
+    div_size = 0.15,
+    div_alpha = 0.4
+  )
+) +
+  labs(
+    x = "Slope for urns_trans",
+    y = "Slope for colours_trans"
+  )
+```
+
+
+
+```{r}
+# Posterior predictive checks to evaluate model fit}
+#print(pp_check(model_1))
+```
+
+
+```{r}
+# Regression 2
+
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+
+
+```
+
+```{r}
+# Diagnostic plots
+#print(plot(model_2))
+```
+
+```{r}
+# Posterior predictive checks to evaluate model fit}
+#print(pp_check(model_2))
+```
+
+```{r}
+
+```
+
+## Add Random Slope
+
+```{r}
+random_slope_model_1 <- brm(
+  formula = DQ_U_o_trans ~ urns_trans + colours_trans + seqBall_trans + (1 + urns + colours + seqBall | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  #cores = 4,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95)
+)
+
+random_slope_model_2 <- brm(
+  formula = DQ_U_o_trans ~ urns_trans + seqBall_trans + (1 + urns + seqBall | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  #cores = 4,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95)
+)
+```
+
+```{r}
+#print(plot(random_slope_model_1))
+#print(plot(random_slope_model_2))
+```
+
+```{r}
+
+# Display a summary of the fitted model
+print(summary(model_1))
+print(summary(model_2))
+
+# Compute marginal likelihoods via bridgesampling for each model
+bridge_1 <- bridge_sampler(model_1)
+bridge_2 <- bridge_sampler(model_2)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_21 > 3
+bf_value_1 <- bridgesampling::bf(bridge_2, bridge_1)
+print(bf_value_1)
+
+#bf_value_2 <- bridgesampling::bf(bridge_1, bridge_2)
+#print(bf_value_2)
+
+
+
+print(summary(random_slope_model_1))
+print(summary(random_slope_model_2))
+# Compute marginal likelihoods via bridgesampling for each model
+bridge_1_rs <- bridge_sampler(random_slope_model_1)
+bridge_2_rs <- bridge_sampler(random_slope_model_2)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_21 > 3
+bf_value_rs_1 <- bridgesampling::bf(bridge_2_rs, bridge_1_rs)
+print(bf_value_rs_1)
+
+#bf_value_rs_2 <- bridgesampling::bf(bridge_1_rs, bridge_2_rs)
+#print(bf_value_rs_2)
+```
+```{r}
+print(bf_value_1)
+if (bf_value_1[1] > 3) {
+  print("Random Intercept Model Support H1-B")
+} else {
+  print("Random Intercept Model Does not Support H1-B")
+}
+
+print(bf_value_rs_1)
+if (bf_value_rs_1[1] > 3) {
+  print("Random Intercept and Slope Model Support H1-B")
+} else {
+  print("Random Intercept and Slope Model Does not Support H1-B")
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
