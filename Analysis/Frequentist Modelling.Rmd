@@ -1,0 +1,165 @@
+---
+title: "Frequentist Modelling"
+output: html_document
+date: "2025-04-08"
+---
+
+```{r setup, include=FALSE}
+#install.packages(c("lme4", "Matrix", "brms", "ggplot2", "glmmTMB"))
+install.packages("tidyverse")
+#knitr::opts_chunk$set(echo = TRUE)
+
+library(glmmTMB)
+library(tidyverse)
+library(lme4)
+
+## cosmetic
+theme_set(theme_bw()+
+theme(panel.spacing=grid::unit(0,"lines")))
+```
+
+# Read Data
+```{r}
+setwd("~/OneDrive - The University of Melbourne/Bayesian Updating and Complexity/Code/Analysis")
+
+participant_data <- read.csv("participant_data.csv")
+```
+
+# Transform Data
+
+To fit a Beta regression, decision quality values must lie strictly between 0 and 1. We transform all decision quality values equal to 0 to 10^{-10}, and those equal to 1 to (1 - 10^{-10})
+
+```{r}
+# Specify the column names to transform
+cols <- c("DQ_U_o", "DQ_U_s", "DQ_C_o", "DQ_C_s")
+
+# Apply the transformation to each specified column in participant_data
+participant_data[cols] <- lapply(participant_data[cols], function(x) {
+  ifelse(x == 0, 10^(-1), ifelse(x == 1, 1 - 10^(-1), x))
+})
+
+```
+
+To fit beta regression, it is the best practice to have the regressor to be standardized
+
+```{r}
+participant_data <- participant_data %>%
+  mutate(
+    urns_trans    = as.numeric(scale(urns)),
+    colours_trans = as.numeric(scale(colours)),
+    seqBall_trans = as.numeric(scale(seqBall)),
+    DV_seqBall_1_trans = as.numeric(scale(DV_seqBall_1)),
+    DV_seqBall_2_trans = as.numeric(scale(DV_seqBall_2)),
+    DV_seqBall_3_trans = as.numeric(scale(DV_seqBall_3)),
+    ACC_u_trans = as.numeric(scale(ACC_u)),
+    ACC_c_trans = as.numeric(scale(ACC_c)),
+    CC_u_trans = as.numeric(scale(CC_u)),
+    CC_c_trans = as.numeric(scale(CC_c)),
+  )
+```
+
+# Data Visualisation 
+
+To detect whether random intercept and random slopes are needed
+
+```{r}
+# Convert participantID to character in base R
+participant_data$participantID <- as.character(participant_data$participantID)
+
+cols <- c("DQ_U_o", "DQ_U_s", "DQ_C_o", "DQ_C_s")
+# Multiple regressions by participant
+for (i in cols){
+  p <- ggplot(participant_data, aes(x = colours, y = !!sym(i), color = participantID)) +
+    # One regression line per participant (colored by participantID)
+    geom_smooth(
+      method = "lm",
+      se = FALSE,
+      linewidth = 0.3
+    ) +
+    # Points (also colored by participantID)
+    geom_point() +
+    labs(
+      x = "colours",
+      y = i
+    ) +
+    theme_minimal()
+  
+  print(p)
+}
+
+```
+
+
+# Data Modelling
+
+
+
+```{r}
+# Set up the factorized participant ID
+participant_data$participantID <- as.factor(as.character(participant_data$participantID))
+
+# R1
+model <- glmmTMB(DQ_U_o ~ ACC_u + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R2
+model <- glmmTMB(DQ_C_o ~ ACC_c + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+# Warning: NA/NaN function evaluation. This warning occurs when the optimizer visits a region of parameter space that is invalid. It is not a problem as long as the optimizer has left that region of parameter space upon convergence, which is indicated by an absence of the model convergence warnings described above. The following warnings indicate possibly-transient numerical problems with the fit, and can be treated in the same way (i.e. ignored if there are no errors or convergence warnings about the final fitted model).
+summary(model)
+```
+
+```{r}
+# R3
+model <- glmmTMB(DQ_U_o ~ urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+
+```
+
+```{r}
+# R4
+model <- glmmTMB(DQ_C_o ~ urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R5
+model <- glmmTMB(DQ_U_s ~ CC_u + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R6
+model <- glmmTMB(DQ_C_s ~ CC_c + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R7
+model <- glmmTMB(DQ_U_o ~ probSubject + bayesInExp + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R8
+model <- glmmTMB(DQ_C_o ~ probSubject + bayesInExp + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R9
+model <- glmmTMB(DQ_U_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R10
+model <- glmmTMB(DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+
+
+
+

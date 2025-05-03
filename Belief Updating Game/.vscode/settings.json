@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Belief Updating.sln"
+    "dotnet.defaultSolution": "Belief Updating Game.sln"
 }
