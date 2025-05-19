@@ -1,0 +1,47 @@
+[
+  {
+    "participantID": "82",
+    "instanceName": "BUPractice",
+    "seqBall": 1,
+    "urnPosteriors": [
+      40.0,
+      60.0
+    ],
+    "colourPosteriors": [
+      48.0,
+      52.0
+    ],
+    "responseTimeUrn": 14.5166016,
+    "responseTimeColour": 85.6335449
+  },
+  {
+    "participantID": "82",
+    "instanceName": "BUPractice",
+    "seqBall": 2,
+    "urnPosteriors": [
+      35.0,
+      65.0
+    ],
+    "colourPosteriors": [
+      41.0,
+      59.0
+    ],
+    "responseTimeUrn": 141.699951,
+    "responseTimeColour": 21.1501465
+  },
+  {
+    "participantID": "82",
+    "instanceName": "BUPractice",
+    "seqBall": 3,
+    "urnPosteriors": [
+      20.0,
+      80.0
+    ],
+    "colourPosteriors": [
+      30.0,
+      70.0
+    ],
+    "responseTimeUrn": 19.7998047,
+    "responseTimeColour": 14.5002441
+  }
+]

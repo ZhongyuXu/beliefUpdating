@@ -155,7 +155,7 @@ r1_diffuse <- brm(
   refresh = 0
 )
 print(summary(r1_diffuse))
-print(plot(r1_diffuse))
+#print(plot(r1_diffuse))
 
 # Regression 2 - Diffuse
 r2_diffuse <- brm(
@@ -174,7 +174,7 @@ r2_diffuse <- brm(
 )
 
 print(summary(r2_diffuse))
-print(plot(r2_diffuse))
+#print(plot(r2_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_1 <- bridge_sampler(r1_diffuse)
@@ -213,7 +213,7 @@ r3_diffuse <- brm(
   refresh = 0
 )
 print(summary(r3_diffuse))
-print(plot(r3_diffuse))
+#print(plot(r3_diffuse))
 
 # Regression 4 - Diffuse
 r4_diffuse <- brm(
@@ -232,7 +232,7 @@ r4_diffuse <- brm(
 )
 
 print(summary(r4_diffuse))
-print(plot(r4_diffuse))
+#print(plot(r4_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_3 <- bridge_sampler(r3_diffuse)
@@ -268,7 +268,7 @@ r5_diffuse <- brm(
   refresh = 0
 )
 print(summary(r5_diffuse))
-print(plot(r5_diffuse))
+#print(plot(r5_diffuse))
 
 
 # Regression 6 - Diffuse
@@ -288,7 +288,7 @@ r6_diffuse <- brm(
 )
 
 print(summary(r6_diffuse))
-print(plot(r6_diffuse))
+#print(plot(r6_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_5 <- bridge_sampler(r5_diffuse)
@@ -324,7 +324,7 @@ r7_diffuse <- brm(
   refresh = 0
 )
 print(summary(r7_diffuse))
-print(plot(r7_diffuse))
+#print(plot(r7_diffuse))
 
 
 # Regression 7 Control - Diffuse
@@ -344,7 +344,7 @@ r7c_diffuse <- brm(
 )
 
 print(summary(r7c_diffuse))
-print(plot(r7c_diffuse))
+#print(plot(r7c_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_7 <- bridge_sampler(r7_diffuse)
@@ -380,7 +380,7 @@ r8_diffuse <- brm(
   refresh = 0
 )
 print(summary(r8_diffuse))
-print(plot(r8_diffuse))
+#print(plot(r8_diffuse))
 
 
 # Regression 8c Control - Diffuse
@@ -400,7 +400,7 @@ r8c_diffuse <- brm(
 )
 
 print(summary(r8c_diffuse))
-print(plot(r8c_diffuse))
+#print(plot(r8c_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_8 <- bridge_sampler(r8_diffuse)
@@ -437,7 +437,7 @@ r9_diffuse <- brm(
   refresh = 0
 )
 print(summary(r9_diffuse))
-print(plot(r9_diffuse))
+#print(plot(r9_diffuse))
 
 
 # Regression 9 Control - Diffuse
@@ -457,7 +457,7 @@ r9c_diffuse <- brm(
 )
 
 print(summary(r9c_diffuse))
-print(plot(r9c_diffuse))
+#print(plot(r9c_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_9 <- bridge_sampler(r9_diffuse)
@@ -493,7 +493,7 @@ r10_diffuse <- brm(
   refresh = 0
 )
 print(summary(r10_diffuse))
-print(plot(r10_diffuse))
+#print(plot(r10_diffuse))
 
 
 # Regression 10 Control - Diffuse
@@ -513,7 +513,7 @@ r10c_diffuse <- brm(
 )
 
 print(summary(r10c_diffuse))
-print(plot(r10c_diffuse))
+#print(plot(r10c_diffuse))
 
 # Compute marginal likelihoods via bridgesampling for each model
 bridge_10 <- bridge_sampler(r10_diffuse)
