@@ -1,0 +1,50 @@
+[
+  {
+    "participantID": "107",
+    "instanceName": "BU3",
+    "seqBall": 1,
+    "urnPosteriors": [
+      67.0,
+      33.0
+    ],
+    "colourPosteriors": [
+      50.0,
+      24.0,
+      26.0
+    ],
+    "responseTimeUrn": 21.75,
+    "responseTimeColour": 45.13379
+  },
+  {
+    "participantID": "107",
+    "instanceName": "BU3",
+    "seqBall": 2,
+    "urnPosteriors": [
+      70.0,
+      30.0
+    ],
+    "colourPosteriors": [
+      52.0,
+      28.0,
+      20.0
+    ],
+    "responseTimeUrn": 6.75,
+    "responseTimeColour": 16.9335938
+  },
+  {
+    "participantID": "107",
+    "instanceName": "BU3",
+    "seqBall": 3,
+    "urnPosteriors": [
+      72.0,
+      28.0
+    ],
+    "colourPosteriors": [
+      54.0,
+      29.0,
+      17.0
+    ],
+    "responseTimeUrn": 6.06640625,
+    "responseTimeColour": 14.9667969
+  }
+]
