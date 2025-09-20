@@ -32,6 +32,17 @@
 
 \usepackage{biblatex}
 
+\usepackage{tabularray}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{codehigh}
+\usepackage[normalem]{ulem}
+\UseTblrLibrary{booktabs}
+\UseTblrLibrary{siunitx}
+\newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
+\newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
+\NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
+
 \begin{document}
 
 
@@ -52,9 +63,12 @@
 Overconfidence is a prevalent cognitive bias that impairs decision-making quality \parencite{achtzigerFastRationalResponseTimes2014}. The potential role of AI advisors in mitigating this bias in cognitive tasks remains largely unexplored. This study aims to address the following questions:
 
 
-test new
-22
-2 223
+\subsection{Analysis of Hidden State Decision Quality}
+asdfasd
+
+\input{/Users/zhongyux/Library/CloudStorage/OneDrive-TheUniversityofMelbourne/Bayesian Updating and Complexity/Code/Analysis/R/hidden_state_decision_quality.tex}
+
+
 \endgroup
 
 \printbibliography 

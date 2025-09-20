@@ -1,0 +1,28 @@
+\begin{table}
+\centering
+\begin{talltblr}[         %% tabularray outer open
+caption={Hidden-state inference Overall Decision Quality},
+note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]Q[]},
+column{2,3,4,5}={}{halign=c,},
+column{1}={}{halign=l,},
+}                     %% tabularray inner close
+\toprule
+& (1) & (2) & (3) & (4) \\ \midrule %% TinyTableHeader
+b\_Intercept & \num{2.204} & \num{2.209} & \num{2.549} & \num{2.416} \\
+& [\num{2.150}, \num{2.253}] & [\num{2.135}, \num{2.285}] & [\num{2.467}, \num{2.631}] & [\num{2.328}, \num{2.503}] \\
+b\_ACC\_u & \num{-0.014} &  &  &  \\
+& [\num{-0.015}, \num{-0.013}] &  &  &  \\
+b\_ACC\_c &  & \num{-0.004} &  &  \\
+&  & [\num{-0.005}, \num{-0.003}] &  &  \\
+b\_CC\_u &  &  & \num{-0.037} &  \\
+&  &  & [\num{-0.041}, \num{-0.033}] &  \\
+b\_CC\_c &  &  &  & \num{-0.015} \\
+&  &  &  & [\num{-0.017}, \num{-0.013}] \\
+sd\_participantID\_\_Intercept & \num{0.167} & \num{0.341} & \num{0.240} & \num{0.366} \\
+& [\num{0.138}, \num{0.205}] & [\num{0.295}, \num{0.400}] & [\num{0.201}, \num{0.287}] & [\num{0.319}, \num{0.430}] \\
+\bottomrule
+\end{talltblr}
+\end{table}

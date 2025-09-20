@@ -4,9 +4,11 @@ output: html_document
 date: "2025-03-21"
 ---
 
+# Pre-embles
+
 ```{r setup, include=FALSE}
 #install.packages("brms","dplyr")
-#install.packages("devtools")
+#install.packages("tinytable")
 #devtools::install_github("tidyverse/tidyverse")
 #devtools::install_github("thomasp85/gganimate")
 
@@ -15,6 +17,8 @@ library(brms)
 library(dplyr)
 library(tidyverse)
 library(bayesplot)
+library(modelsummary)
+library(tinytable)
 ```
 
 # Read Data
@@ -29,10 +33,7 @@ participant_data <- read.csv("participant_data.csv")
 
 # Transform Data
 
-
 To fit Bayesian regression, it is the best practice to standardize the regressors
-
-
 
 ```{r}
 n <- nrow(participant_data)
@@ -48,8 +49,7 @@ participant_data <- participant_data %>%
   )
 ```
 
-To fit a Beta regression, decision quality values must lie strictly between 0 and 1. We transform all decision quality values equal to 0 to 10^{-10}, and those equal to 1 to (1 - 10^{-10})
-
+To fit a Beta regression, decision quality values must lie strictly between 0 and 1. We transform all decision quality values equal to 0 to 10\^{-10}, and those equal to 1 to (1 - 10\^{-10})
 
 ```{r}
 # Specify the column names to transform
@@ -66,8 +66,8 @@ participant_data[cols] <- lapply(participant_data[cols], function(x) {
 
 In the state updating question, decision quality does not decrease as the number of potential signals (number of possible colors) in an instance increase, since more potential signals does not increase computational complexity.
 
-
 ## Visualising H1-B using random intercept simple linear regressions
+
 ```{r}
 # Simple linear regression (pooled across participants)
 ggplot(participant_data, aes(x = colours, y = DQ_U_o_trans)) +
@@ -108,6 +108,7 @@ ggplot(participant_data, aes(x = colours, y = DQ_U_o, color = participantID)) +
   ) +
   theme_minimal()
 ```
+
 # Bayesian Regressions
 
 ## Set Priors
@@ -133,7 +134,6 @@ diffuse_priors_nb <- c(
 )
 
 ```
-
 
 ```{r}
 options(brms.verbose = FALSE)
@@ -418,7 +418,6 @@ if (BF_88c[1] > 3) {
 }
 ```
 
-
 ```{r}
 # Regression 9 - Diffuse
 # Fit the hierarchical Bayesian beta regression model using the transformed response
@@ -531,5 +530,169 @@ if (BF_1010c[1] > 3) {
 }
 ```
 
+```{r}
+# R11 DQ_C_o and state space and signal space
+r11_diffuse <- brm(
+  formula = DQ_C_o ~ urns_trans + colours_trans + seqBall_trans  + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(r11_diffuse))
+```
 
+```{r}
+# r12: DQ_U_S with DV(seq=2) and DV(seq=3)
+r12_diffuse <- brm(
+  formula = DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(r12_diffuse))
+```
 
+```{r}
+# Calculate the interpretation of coefficient
+
+```
+
+```{r}
+# Define the custom functions for modelsummary to work
+tidy.brmsfit <- function(x, ...) {
+  s <- as.data.frame(posterior_summary(x, probs = c(0.025, 0.975)))
+  ret <- data.frame(
+    term = rownames(s),
+    estimate = s[, "Estimate"],
+    conf.low = s[, "Q2.5"],
+    conf.high = s[, "Q97.5"]
+  )
+  rownames(ret) <- NULL
+  ret
+}
+
+glance.brmsfit <- function(x, ...) {
+  looic <- tryCatch(loo(x)$estimates["elpd_loo", "Estimate"], error = function(e) NA)
+  waic <- tryCatch(waic(x)$estimates["elpd_waic", "Estimate"], error = function(e) NA)
+  r2 <- tryCatch(brms::bayes_R2(x)[1], error = function(e) NA)
+  data.frame(
+    LOOIC = -2 * looic,
+    WAIC = -2 * waic,
+    R2 = r2
+  )
+}
+# Collate Bayesian regression to a latex table
+
+# This is for Dependent Variable = DQ_u
+models <- list(
+  r7_diffuse,
+  r1_diffuse,
+  r9_diffuse,
+  r12_diffuse
+)
+
+nameList <- c("b_Intercept" = "$Intercept$", "b_ACC_u" = "$ACC_u$", "b_ACC_c" = "$ACC_c$", "b_CC_u" = "$CC_u$", "b_CC_c" = "$CC_c$", "sd_participantID__Intercept" = "$sd(pID)$", "b_urns_trans" = "$urns$", "b_colours_trans" = "$cols$", "b_seqBall_trans"="$ballSeq$", "b_DV_seqBall_2"="$DV(seq=2)$", "b_DV_seqBall_3" = "$DV(seq=3)$")
+
+# Generate the LaTeX table directly as a character string
+latex_table <- modelsummary(
+  models,
+  metrics = "none",
+  statistic = "conf.int",
+  fmt = 3,
+  coef_rename = nameList,
+#  title = "Hidden-state inference Decision Quality",
+  gof_omit = "R2|IC|Adj|F|RMSE|Log",
+  output = "latex",     # returns LaTeX code as a string
+  escape = FALSE
+)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$DQ_o^{urn}$" = 2:3,
+    "$DQ_s^{urn}$" = 4:5
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "hidden_state_decision_quality.tex")
+```
+
+```{r}
+# Regression 13 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+r13_diffuse <- brm(
+  formula = DQ_C_o ~ urns_trans + colours_trans + seqBall_trans + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(r13_diffuse))
+```
+
+```{r}
+# This is for Dependent Variable = DQ_C
+models <- list(
+  r8_diffuse,
+  r13_diffuse,
+  r10_diffuse
+)
+
+nameList <- c("b_Intercept" = "$Intercept$", "b_ACC_u" = "$ACC_u$", "b_ACC_c" = "$ACC_c$", "b_CC_u" = "$CC_u$", "b_CC_c" = "$CC_c$", "sd_participantID__Intercept" = "$sd(pID)$", "b_urns_trans" = "$urns$", "b_colours_trans" = "$cols$", "b_seqBall_trans"="$ballSeq$", "b_DV_seqBall_2"="$DV(seq=2)$", "b_DV_seqBall_3" = "$DV(seq=3)$")
+
+# Generate the LaTeX table directly as a character string
+latex_table <- modelsummary(
+  models,
+  metrics = "none",
+  statistic = "conf.int",
+  fmt = 3,
+  coef_rename = nameList,
+#  title = "Future Forecasting Decision Quality",
+  gof_omit = "R2|IC|Adj|F|RMSE|Log",
+  output = "latex",     # returns LaTeX code as a string
+  escape = FALSE
+)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$DQ_o^{col}$" = 2:3,
+    "$DQ_s^{col}$" = 4
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "futureForecasting_DQ.tex")
+```

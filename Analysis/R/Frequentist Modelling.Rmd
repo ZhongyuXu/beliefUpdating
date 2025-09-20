@@ -6,12 +6,13 @@ date: "2025-04-08"
 
 ```{r setup, include=FALSE}
 #install.packages(c("lme4", "Matrix", "brms", "ggplot2", "glmmTMB"))
-#install.packages("tidyverse")
+#install.packages("lmerTest")
 #knitr::opts_chunk$set(echo = TRUE)
 
 library(glmmTMB)
 library(tidyverse)
 library(lme4)
+library(lmerTest)
 
 ## cosmetic
 theme_set(theme_bw()+
@@ -137,29 +138,155 @@ summary(model)
 
 ```{r}
 # R7
-model <- glmmTMB(DQ_U_o ~ probSubject + bayesInExp + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+model <- glmmTMB(DQ_U_o ~ DV_bayesInExp + sex + age + (1 |  instanceName) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
 summary(model)
 ```
 
 ```{r}
 # R8
-model <- glmmTMB(DQ_C_o ~ probSubject + bayesInExp + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+model <- glmmTMB(DQ_C_o ~  DV_bayesInExp + sex + age + (1 | instanceName) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
 summary(model)
 ```
 
 ```{r}
 # R9
-model <- glmmTMB(DQ_U_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
-summary(model)
+model <- glmmTMB(DQ_U_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID + instanceName) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+print(summary(model))
+# logit(u) = log(u/(1-u)) = ata = X*beta + Z*b
+# This leads to u = exp(eta) / (1+exp(eta))
+
+# Calculate eta when both DV_seqBall_1 = DV_seqBall_3 = 0. 
+# i.e. The average decision quality for two-ball-drawn trials
+parameters = model[2]$fit$par
+eta_2BD = parameters[1]
+u_2BD = exp(eta_2BD) / (1+exp(eta_2BD))
+cat(sprintf("The average decision quality for two-ball-drawn trials is %.3f \n", u_2BD))
+
+# Calculate eta when DV_seqBall_1 = 1 
+# i.e. The average decision quality for one-ball-drawn trials
+eta_1BD = parameters[1] + parameters[2]
+u_1BD = exp(eta_1BD) / (1+exp(eta_1BD))
+cat(sprintf("The average decision quality for one-ball-drawn trials is %.3f \n", u_1BD))
+
+# Calculate eta when DV_seqBall_3 = 1 
+# i.e. The average decision quality for three-ball-drawn trials
+eta_3BD = parameters[1] + parameters[3]
+u_3BD = exp(eta_3BD) / (1+exp(eta_3BD))
+cat(sprintf("The average decision quality for three-ball-drawn trials is %.3f \n", u_3BD))
+
+diff_1_2 = (u_1BD - u_2BD) * 100
+diff_1_3 = (u_1BD - u_3BD) * 100
+cat(sprintf("Decision quality in one-ball-drawn trials are on average %.2f percentage points higher than two-ball-drawn trials and %.2f percentage point higher than three-ball-drawn trials \n", diff_1_2, diff_1_3))
 ```
 
 ```{r}
 # R10
-model <- glmmTMB(DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+model <- glmmTMB(DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 | participantID + instanceName) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+
+# Calculate eta when both DV_seqBall_1 = DV_seqBall_3 = 0. 
+# i.e. The average decision quality for one-ball-drawn trials
+parameters = model[2]$fit$par
+eta_1BD = parameters[1]
+u_1BD = exp(eta_1BD) / (1+exp(eta_1BD))
+cat(sprintf("The average decision quality for one-ball-drawn trials is %.2f \n", u_1BD))
+
+# Calculate eta when DV_seqBall_1 = 1 
+# i.e. The average decision quality for two-ball-drawn trials
+eta_2BD = parameters[1] + parameters[2]
+u_2BD = exp(eta_2BD) / (1+exp(eta_2BD))
+cat(sprintf("The average decision quality for two-ball-drawn trials is %.2f \n", u_2BD))
+
+# Calculate eta when DV_seqBall_3 = 1 
+# i.e. The average decision quality for three-ball-drawn trials
+eta_3BD = parameters[1] + parameters[3]
+u_3BD = exp(eta_3BD) / (1+exp(eta_3BD))
+cat(sprintf("The average decision quality for three-ball-drawn trials is %.2f \n", u_3BD))
+```
+
+```{r}
+# R11
+model <- lmer(responseTimeUrn ~ CC_u + (1 | participantID + seqBall), data = participant_data)
+summary(model)
+```
+
+```{r}
+# R12
+model <- lmer(responseTimeColour ~ CC_c + (1 | participantID + seqBall), data = participant_data)
+summary(model)
+```
+```{r}
+# R13
+model <- glmmTMB(DQ_U_o ~ ACC_u + responseTimeUrn + ACC_u * responseTimeUrn + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+
+# Warning: NA/NaN function evaluation. This warning occurs when the optimizer visits a region of parameter space that is invalid. It is not a problem as long as the optimizer has left that region of parameter space upon convergence, which is indicated by an absence of the model convergence warnings described above. The following warnings indicate possibly-transient numerical problems with the fit, and can be treated in the same way (i.e. ignored if there are no errors or convergence warnings about the final fitted model).
+```
+
+```{r}
+# R14
+model <- glmmTMB(DQ_C_o ~ ACC_c + responseTimeColour + ACC_c * responseTimeColour + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+# Warning: NA/NaN function evaluation. This warning occurs when the optimizer visits a region of parameter space that is invalid. It is not a problem as long as the optimizer has left that region of parameter space upon convergence, which is indicated by an absence of the model convergence warnings described above. The following warnings indicate possibly-transient numerical problems with the fit, and can be treated in the same way (i.e. ignored if there are no errors or convergence warnings about the final fitted model).
+```
+
+
+
+```{r}
+# R15
+model <- glmmTMB(DQ_U_o ~ ACC_u + urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+```{r}
+# R16
+model <- glmmTMB(DQ_U_s ~ CC_u + urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+```{r}
+# R17
+model <- glmmTMB(DQ_C_o ~ ACC_c + urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
 summary(model)
 ```
 
 
+```{r}
+# R18
+model <- glmmTMB(DQ_C_s ~ CC_c + urns + colours + seqBall + (1 | participantID) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+summary(model)
+```
+
+
+```{r}
+# R19
+model <- glmmTMB(DQ_C_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID + instanceName) , data = participant_data, family = glmmTMB::beta_family(link = "logit"))
+print(summary(model))
+# logit(u) = log(u/(1-u)) = ata = X*beta + Z*b
+# This leads to u = exp(eta) / (1+exp(eta))
+
+# Calculate eta when both DV_seqBall_1 = DV_seqBall_3 = 0. 
+# i.e. The average decision quality for two-ball-drawn trials
+parameters = model[2]$fit$par
+eta_2BD = parameters[1]
+u_2BD = exp(eta_2BD) / (1+exp(eta_2BD))
+cat(sprintf("The average decision quality for two-ball-drawn trials is %.3f \n", u_2BD))
+
+# Calculate eta when DV_seqBall_1 = 1 
+# i.e. The average decision quality for one-ball-drawn trials
+eta_1BD = parameters[1] + parameters[2]
+u_1BD = exp(eta_1BD) / (1+exp(eta_1BD))
+cat(sprintf("The average decision quality for one-ball-drawn trials is %.3f \n", u_1BD))
+
+# Calculate eta when DV_seqBall_3 = 1 
+# i.e. The average decision quality for three-ball-drawn trials
+eta_3BD = parameters[1] + parameters[3]
+u_3BD = exp(eta_3BD) / (1+exp(eta_3BD))
+cat(sprintf("The average decision quality for three-ball-drawn trials is %.3f \n", u_3BD))
+
+diff_1_2 = (u_1BD - u_2BD) * 100
+diff_1_3 = (u_1BD - u_3BD) * 100
+cat(sprintf("Decision quality in one-ball-drawn trials are on average %.2f percentage points higher than two-ball-drawn trials and %.2f percentage point higher than three-ball-drawn trials \n", diff_1_2, diff_1_3))
+```
 
 
 

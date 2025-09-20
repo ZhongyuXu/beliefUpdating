@@ -1,0 +1,36 @@
+{
+  "editor.semanticHighlighting.enabled": true,
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "variable",
+          "variable.other",
+          "variable.other.readwrite",
+          "variable.other.readwrite.cs",
+          "variable.parameter",
+          "meta.definition.variable",
+          "meta.object.member",
+          "entity.name.variable",
+          "support.variable"
+        ],
+        "settings": {
+          "foreground": "#66CCFF"
+        }
+      }
+    ]
+  },
+  "editor.semanticTokenColorCustomizations": {
+    "enabled": true,
+    "rules": {
+      "variable": "#66CCFF",
+      "variable.readonly": "#66CCFF",
+      "variable.declaration": "#66CCFF",
+      "variable.defaultLibrary": "#66CCFF",
+      "parameter": "#66CCFF",
+      "local": "#66CCFF",
+      "property": "#66CCFF"
+    }
+  },
+  "notebook.output.textColor": "#66CCFF"
+}
