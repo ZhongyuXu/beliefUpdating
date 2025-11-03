@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "REditorSupport.r",
+    "REditorSupport.r-lsp",
+    "RDebugger.r-debugger",
+    "quarto.quarto",
+    "shd101wyy.markdown-preview-enhanced"
+  ]
+}

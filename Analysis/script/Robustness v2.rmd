@@ -1,0 +1,1483 @@
+---
+title: "Bayesian Regressions"
+output: html_document
+date: "2025-09-01"
+---
+
+# Pre-embles
+
+"R version 4.4.3 (2025-02-28)" packageVersion("brms") '2.22.0'
+
+## Further Things to Include in the manuscript for Bayesian regressions:
+
+ESS and RHat
+
+Graphical representation of posteriors
+
+posterior predictive check
+
+Posterior model probability as a function of prior model probability with (different or computed) Bayes Factors
+
+Credible interval is based on probability density (mode and HDI) or quantiles (median and ETI)? -- quantiles
+
+-   highest-density intervals (HDIs), I recommend15 that ESS ≥ 10,000. (Kruschke, 2021)
+
+-   For stable estimates of limits of equal-tailed intervals, ESS can be lower. The central tendency can be stably estimated with smaller ESS (when the central tendency is in a high-density region of the distribution. (Gong & Flegal, 2016) suggests ESS\>=4,000 is sufficient threshold for high dimensional models
+
+Check if I can use other diffuse priors to produce the same result as sensitivity analysis.
+
+evidence ratio, credibility? - not now
+
+# Note for R Markdown
+cmd + enter run one 
+Cmd + shift + enter to run one chunk
+
+
+```{r setup, include=FALSE}
+#install.packages("brms","dplyr")
+#install.packages("tinytable")
+#devtools::install_github("tidyverse/tidyverse")
+#devtools::install_github("thomasp85/gganimate")
+
+knitr::opts_chunk$set(echo = TRUE)
+library(brms)
+library(dplyr)
+library(tidyverse)
+library(bayesplot)
+library(modelsummary)
+library(tinytable)
+print(R.version.string)
+print(packageVersion("brms"))
+```
+
+# Read Data
+
+```{r}
+setwd("~/OneDrive - The University of Melbourne/Bayesian Updating and Complexity/Code/Analysis") # nolint
+
+participant_data <- read.csv("participant_data_long.csv")
+
+
+```
+
+# Transform Data
+
+To fit Bayesian regression, it is the best practice to standardize the regressors
+
+```{r}
+n <- nrow(participant_data)
+participant_data <- participant_data %>%
+  mutate(
+    urns_trans    = as.numeric(scale(urns)),
+    colours_trans = as.numeric(scale(colours)),
+    seqBall_trans = as.numeric(scale(seqBall)),
+    ACC_u_trans = as.numeric(scale(ACC_u)),
+    ACC_c_trans = as.numeric(scale(ACC_c)),
+    CC_u_trans = as.numeric(scale(CC_u)),
+    CC_c_trans = as.numeric(scale(CC_c)),
+  )
+```
+
+To fit a Beta regression, decision quality values must lie strictly between 0 and 1. We transform all decision quality values equal to 0 to 10\^{-10}, and those equal to 1 to (1 - 10\^{-10})
+
+```{r}
+# Specify the column names to transform
+cols <- c("DQ_U_o", "DQ_U_s", "DQ_C_o", "DQ_C_s")
+
+# Apply the transformation to each specified column in participant_data
+participant_data[cols] <- lapply(participant_data[cols], function(x) {
+  ifelse(x == 0, 10^(-1), ifelse(x == 1, 1 - 10^(-1), x))
+})
+
+```
+
+# Bayesian Regressions
+
+## Set Priors
+
+```{r}
+# Diffuse Priors
+# Define priors for the model:
+# - Fixed effects (slopes and intercept): Normal(0, 1000000)
+# - Random intercept standard deviation: Half-Cauchy(0, 1)
+# - Beta precision parameter (phi): Gamma(2, 0.1)
+rb_diffuse_priors <- c(
+  set_prior("normal(0, 1000000)", class = "b"),
+  set_prior("normal(0, 1000000)", class = "Intercept"),
+  set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+  set_prior("gamma(2, 0.1)", class = "phi")
+)
+
+# Priors for regression have no independent variables - remove the class = b prior
+rb_diffuse_priors_nb <- c(
+  set_prior("normal(0, 1000000)", class = "Intercept"),
+  set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+  set_prior("gamma(2, 0.1)", class = "phi")
+)
+
+
+```
+
+## R7 & R7c - H1
+
+```{r}
+# Regression 7 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r7_EWCC_diffuse <- brm(
+  formula = DQ_U_o ~ AEWCC_u + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r7_EWCC_diffuse))
+#print(plot(r7_diffuse)) # nolint
+
+
+# Regression 7 Control - Diffuse
+rb_r7_EWCC_c_diffuse <- brm(
+  formula = DQ_U_o ~  (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors_nb,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+
+print(summary(rb_r7_EWCC_c_diffuse))
+#print(plot(r7c_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_7_EWCC <- bridge_sampler(rb_r7_EWCC_diffuse)
+rb_bridge_7c_EWCC <- bridge_sampler(rb_r7_EWCC_c_diffuse)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_77c > 3
+rb_BF_77c_EWCC <- bridgesampling::bf(rb_bridge_7_EWCC, rb_bridge_7c_EWCC)
+print(rb_BF_77c_EWCC)
+
+if (rb_BF_77c_EWCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H1")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H1")
+}
+```
+
+```{r}
+# Regression 7 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r7_MDCC_diffuse <- brm(
+  formula = DQ_U_o ~ AMDCC_u + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r7_MDCC_diffuse))
+#print(plot(r7_diffuse))
+
+# Note: The control model is the same as above since the complexity predictor is omitted
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_7_MDCC <- bridge_sampler(rb_r7_MDCC_diffuse)
+
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_77c > 3
+rb_BF_77c_MDCC <- bridgesampling::bf(rb_bridge_7_MDCC, rb_bridge_7c_EWCC)
+print(rb_BF_77c_MDCC)
+
+if (rb_BF_77c_MDCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H1")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H1")
+}
+```
+
+## R8 & R8c - H3
+
+```{r}
+# Regression 8 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r8_EWCC_diffuse <- brm(
+  formula = DQ_C_o ~ AEWCC_c + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r8_EWCC_diffuse))
+#print(plot(r8_diffuse))
+
+
+# Regression 8c Control - Diffuse
+rb_r8c_diffuse <- brm(
+  formula = DQ_C_o ~  (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors_nb,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+
+print(summary(rb_r8c_diffuse))
+#print(plot(rb_r8c_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_8_EWCC <- bridge_sampler(rb_r8_EWCC_diffuse)
+rb_bridge_8c <- bridge_sampler(rb_r8c_diffuse)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_88c > 3
+rb_BF_88c_EWCC <- bridgesampling::bf(rb_bridge_8_EWCC, rb_bridge_8c)
+print(rb_BF_88c_EWCC)
+
+if (rb_BF_88c_EWCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+```{r}
+# Regression 8 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r8_MDCC_diffuse <- brm(
+  formula = DQ_C_o ~ AMDCC_c + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r8_MDCC_diffuse))
+#print(plot(r8_diffuse))
+
+# Note: Again the control model is the same as above since the complexity predictor is omitted
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_8_MDCC <- bridge_sampler(rb_r8_MDCC_diffuse)
+
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_88c > 3
+rb_BF_88c_MDCC  <- bridgesampling::bf(rb_bridge_8_MDCC, rb_bridge_8c)
+print(rb_BF_88c_MDCC )
+
+if (rb_BF_88c_MDCC [1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+## R9 & R9c - H2
+
+```{r}
+# Regression 9 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r9_EWCC_diffuse <- brm(
+  formula = DQ_U_s ~ EWCC_u + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r9_EWCC_diffuse))
+#print(plot(r9_diffuse))
+
+
+# Regression 9 Control - Diffuse
+rb_r9c_diffuse <- brm(
+  formula = DQ_U_s ~  (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors_nb,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+
+print(summary(rb_r9c_diffuse))
+#print(plot(rb_r9c_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_9_EWCC <- bridge_sampler(rb_r9_EWCC_diffuse)
+rb_bridge_9c <- bridge_sampler(rb_r9c_diffuse)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_99c > 3
+rb_BF_99c_EWCC <- bridgesampling::bf(rb_bridge_9_EWCC, rb_bridge_9c)
+print(rb_BF_99c_EWCC)
+
+if (rb_BF_99c_EWCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2")
+}
+```
+
+```{r}
+# Regression 9 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r9_MDCC_diffuse <- brm(
+  formula = DQ_U_s ~ MDCC_u + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r9_MDCC_diffuse))
+#print(plot(r9_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_9_MDCC <- bridge_sampler(rb_r9_MDCC_diffuse)
+
+# Note: Again the control model is the same since no predictor of complexity metric
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_99c > 3
+rb_BF_99c_MDCC <- bridgesampling::bf(rb_bridge_9_MDCC, rb_bridge_9c)
+print(rb_BF_99c_MDCC)
+
+if (rb_BF_99c_MDCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2")
+}
+```
+
+## R10 & R10c - H4
+
+```{r}
+# Regression 10 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r10_EWCC_diffuse <- brm(
+  formula = DQ_C_s ~ EWCC_c + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r10_EWCC_diffuse))
+#print(plot(r10_diffuse))
+
+
+# Regression 10 Control - Diffuse
+rb_r10c_diffuse <- brm(
+  formula = DQ_C_s ~  (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors_nb,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+
+print(summary(rb_r10c_diffuse))
+#print(plot(rb_r10c_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_10_EWCC <- bridge_sampler(rb_r10_EWCC_diffuse)
+rb_bridge_10c <- bridge_sampler(rb_r10c_diffuse)
+
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_1010c > 3
+rb_BF_1010c_EWCC <- bridgesampling::bf(rb_bridge_10_EWCC, rb_bridge_10c)
+print(rb_BF_1010c_EWCC)
+
+if (rb_BF_1010c_EWCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H4")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H4")
+}
+```
+
+```{r}
+# Regression 10 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r10_MDCC_diffuse <- brm(
+  formula = DQ_C_s ~ MDCC_c + (1 | participantID),
+  data = participant_data,
+  family = Beta(link = "logit"),
+  prior = rb_diffuse_priors,
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r10_MDCC_diffuse))
+#print(plot(r10_diffuse))
+
+# Compute marginal likelihoods via bridgesampling for each model
+rb_bridge_10_MDCC <- bridge_sampler(rb_r10_MDCC_diffuse)
+
+# Again the control regression is the same
+# Calculate the Bayes factor (BF) comparing Model A to Model B.
+# BF_1010c > 3
+rb_BF_1010c_MDCC <- bridgesampling::bf(rb_bridge_10_MDCC, rb_bridge_10c)
+print(rb_BF_1010c_MDCC)
+
+if (rb_BF_1010c_MDCC[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H4")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H4")
+}
+```
+
+## R14 - HSI Time Vs Step-wise CC
+
+```{r}
+# Regression 14 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r14_EWCC_diffuse <- brm(
+  formula = responseTimeUrn ~ EWCC_u + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r14_EWCC_diffuse))
+```
+
+```{r}
+# Regression 14 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r14_MDCC_diffuse <- brm(
+  formula = responseTimeUrn ~ MDCC_u + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r14_MDCC_diffuse))
+```
+
+## R15 - FF Time Vs Step-wise CC
+
+```{r}
+# Regression 15 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r15_EWCC_diffuse <- brm(
+  formula = responseTimeColour ~ EWCC_c + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r15_EWCC_diffuse))
+```
+
+```{r}
+# Regression 15 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r15_MDCC_diffuse <- brm(
+  formula = responseTimeColour ~ MDCC_c + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r15_MDCC_diffuse))
+```
+
+## R16 - DQ_U\_o Vs Instance Sequence
+
+```{r}
+# Regression 16 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r16_DQ_o_insSeq_diffuse <- brm(
+  formula = DQ_U_o ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r16_DQ_o_insSeq_diffuse))
+```
+
+## R17 - DQ_U\_s Vs Instance Sequence
+
+```{r}
+# Regression 17 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r17_DQ_s_insSeq_diffuse <- brm(
+  formula = DQ_U_s ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r17_DQ_s_insSeq_diffuse))
+```
+
+## R18 - RT_u Vs Instance Sequence
+
+```{r}
+# Regression 18 - Diffuse
+# Fit the hierarchical Bayesian beta regression model using the transformed response
+rb_r18_RT_U_insSeq_diffuse <- brm(
+  formula = responseTimeUrn ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r18_RT_U_insSeq_diffuse))
+```
+
+## R19- DQ_C\_o Vs Instance Sequence
+
+```{r}
+rb_r19_DQ_o_insSeq_diffuse <- brm(
+  formula = DQ_C_o ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r19_DQ_o_insSeq_diffuse))
+```
+
+## R20 - DQ_C\_s Vs Instance Sequence
+
+```{r}
+rb_r20_DQ_s_insSeq_diffuse <- brm(
+  formula = DQ_C_s ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r20_DQ_s_insSeq_diffuse))
+```
+
+## R21 - RT_c Vs Instance Sequence
+
+```{r}
+rb_r21_RT_C_insSeq_diffuse <- brm(
+  formula = responseTimeColour ~ instanceSeq + (1 | participantID),
+  data = participant_data,
+  family = Gamma(link = "log"),
+  prior = c(
+    prior(normal(0, 10), class = "b"),            # very wide for coefficients
+    prior(normal(0, 10), class = "Intercept"),    # very wide for intercept
+    prior(gamma(0.01, 0.01), class = "shape")     # diffuse for shape (mean=1, var=100)
+  ),
+  chains = 4,
+  iter = 2000,
+  warmup = 1000,
+  seed = 123,
+  save_pars = save_pars(all = TRUE),
+  control = list(adapt_delta = 0.95),
+  silent = TRUE,
+  refresh = 0
+)
+print(summary(rb_r21_RT_C_insSeq_diffuse))
+```
+
+# Output Regression Table
+
+## Table Setup
+
+```{r}
+
+## 1) Tidy is fine, but ensure no name clashes
+
+#tidy.brmsfit <- function(x, ...) {
+#  s <- as.data.frame(brms::posterior_summary(x, probs = c(0.025, 0.975)))
+#  ret <- data.frame(
+#    term = rownames(s),
+#    estimate = s[, "Estimate"],
+#    conf.low = s[, "Q2.5"],
+#    conf.high = s[, "Q97.5"],
+#    stringsAsFactors = FALSE
+#  )
+#  rownames(ret) <- NULL
+#  ret
+#}
+
+
+## Ensure a tidy() generic is available
+library(generics)   # or library(broom)
+
+## Overwrite your method
+tidy.brmsfit <- function(x, conf.level = 0.95, effects = "fixed",
+                         digits = 3, ...) {
+  probs <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+  s <- as.data.frame(brms::posterior_summary(x, probs = probs))
+
+  ret <- data.frame(
+    term         = rownames(s),
+    estimate_num = s[,"Estimate"],
+    conf.low     = s[, 3],      # lower CrI
+    conf.high    = s[, 4],      # upper CrI
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+
+  ## keep only FIXED effects if requested (brms prefixes "b_")
+  if (identical(effects, "fixed")) {
+    ret <- ret[grepl("^b_", ret$term), , drop = FALSE]
+  }
+  ret$term <- sub("^b_", "", ret$term)
+
+  ## star if CrI excludes 0
+  sig <- with(ret, !is.na(conf.low) & !is.na(conf.high) & conf.low * conf.high > 0)
+
+  ## character estimate with star appended; numeric kept only during build
+  fmt <- paste0("%.", digits, "f%s")
+  ret$estimate <- sprintf(fmt, ret$estimate_num, ifelse(sig, "$^{\\ast}$", ""))
+  ret$estimate_num <- NULL
+
+  ret
+}
+
+## 2) Glance: use summary=FALSE for R2 draws; guard log_lik
+glance_brms <- function(m) {
+  N <- tryCatch(insight::nobs(m), error = function(e) NA_integer_)
+  r2_draws <- tryCatch(as.numeric(brms::bayes_R2(m, summary = FALSE)),
+                       error = function(e) NA_real_)
+  R2_bayes <- if (all(is.na(r2_draws))) {
+    ## fall back to summary estimate if draws unavailable
+    as.numeric(brms::bayes_R2(m, summary = TRUE)[, "Estimate"])
+  } else {
+    mean(r2_draws)
+  }
+  LL <- tryCatch({
+    ll_mat <- brms::log_lik(m)
+    sum(colMeans(ll_mat))
+  }, error = function(e) NA_real_)
+
+  tibble::tibble(
+    `N` = N,
+    `Bayes R^2` = R2_bayes,
+    `LL` = LL
+  )
+}
+
+## 3) Register for the brmsfit class
+glance_custom <- list("brmsfit" = glance_brms)
+
+## 4) Map & keep patterns from dropping rows you need
+gof_map <- tribble(
+  ~raw,         ~clean,                        ~fmt, ~omit,
+  "N",          "$N$",                           0,   FALSE,
+  "Bayes R^2",  "$R^2_{\\text{Bayes}}$",        3,   FALSE,
+  "LL",         "$\\mathrm{LL}$",               3,   FALSE
+)
+
+```
+
+```{r}
+## Drop-in replacement
+safe_nobs <- function(m) {
+  n <- suppressWarnings(tryCatch(insight::nobs(m), error = function(e) NA_integer_))
+  if (is.na(n) || !is.finite(n) || n <= 0) {
+    n <- suppressWarnings(tryCatch(nrow(insight::get_data(m, effects = "fixed", verbose = FALSE)),
+                                   error = function(e) NA_integer_))
+  }
+  if (is.na(n) || !is.finite(n) || n <= 0) {
+    n <- suppressWarnings(tryCatch(ncol(brms::log_lik(m)),
+                                   error = function(e) NA_integer_))
+  }
+  n
+}
+
+safe_bayes_r2 <- function(m) tryCatch({
+  d <- as.numeric(brms::bayes_R2(m, summary = FALSE))
+  if (length(d) == 0 || anyNA(d)) as.numeric(brms::bayes_R2(m, summary = TRUE)[, "Estimate"]) else mean(d)
+}, error = function(e) NA_real_)
+
+safe_ll <- function(m) tryCatch({
+  ll <- brms::log_lik(m); sum(colMeans(ll))
+}, error = function(e) NA_real_)
+
+fmt <- function(x, digits = 3) {
+  ifelse(
+    is.na(x),
+    "",
+    paste0("$", formatC(x, format = "f", digits = digits), "$")
+  )
+}
+
+fmt0 <- function(x) ifelse(is.na(x), "", paste0("$", formatC(x, format = "f", digits = 0), "$"))
+fmt3 <- function(x) ifelse(is.na(x), "", paste0("$", formatC(x, format = "f", digits = 3), "$"))
+```
+
+```{r}
+nameList <- c("b_Intercept" = "$Intercept$", "b_ACC_u" = "$ACC_u$", "b_ACC_c" = "$ACC_c$", "b_CC_u" = "$CC_u$", "b_CC_c" = "$CC_c$", "sd_participantID__Intercept" = "$sd(pID)$", "b_urns_trans" = "$urns$", "b_colours_trans" = "$cols$", "b_seqBall_trans"="$ballSeq$", "b_DV_seqBall_2"="$DV(seq=2)$", "b_DV_seqBall_3" = "$DV(seq=3)$", "b_instanceSeq" = "$Instance Sequence$")
+```
+
+```{r}
+make_latex_table <- function(models, nameList, conf.level = 0.95) {
+  ## --- GOF you already compute elsewhere (optional) ---
+  Ns  <- vapply(models, safe_nobs,     integer(1))
+  R2s <- vapply(models, safe_bayes_r2, numeric(1))
+  LLs <- vapply(models, safe_ll,       numeric(1))
+
+  fmt0 <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = 0))
+  fmt3 <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = 3))
+
+  model_names <- paste0("M", seq_along(models))
+  add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+    dplyr::bind_cols(
+      setNames(tibble::as_tibble(rbind(fmt0(Ns), fmt3(R2s), fmt3(LLs))), model_names)
+    )
+
+  ## --- Explicit tidier passed to modelsummary; returns estimate as CHARACTER ---
+  ms_tidy <- function(x, ...) {
+    probs <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+    s <- as.data.frame(brms::posterior_summary(x, probs = probs))
+
+    df <- data.frame(
+      term     = rownames(s),
+      est_num  = s[,"Estimate"],
+      conf.low = s[, 3],
+      conf.high= s[, 4],
+      stringsAsFactors = FALSE,
+      row.names = NULL
+    )
+
+    ## keep fixed effects only, clean names
+    df <- df[grepl("^b_", df$term), , drop = FALSE]
+    df$term <- sub("^b_", "", df$term)
+
+    ## star if CrI excludes 0
+    sig  <- with(df, !is.na(conf.low) & !is.na(conf.high) & conf.low * conf.high > 0)
+    star <- ifelse(sig, "$^{\\ast}$", "")
+
+    ## make estimate a CHARACTER so LaTeX prints verbatim
+    df$estimate <- sprintf("%.3f%s", df$est_num, star)
+    df$est_num  <- NULL
+    return(df)
+  }
+
+  ## --- Build LaTeX table ---
+  latex_table <- modelsummary::modelsummary(
+    models,
+    tidy        = ms_tidy,                 # uses our function (not S3 dispatch)
+    estimate    = "{estimate}",            # print our character as-is
+    statistic   = "[{conf.low}, {conf.high}]",
+    fmt         = 3,                       # affects numeric stats (CI bounds)
+    stars       = FALSE,                   # <-- important: no p-value stars
+    coef_rename = nameList,
+    model_names = model_names,
+    gof_map     = NA,                      # avoid GOF warnings
+    add_rows    = add_rows_df,
+    output      = "latex",
+    escape      = FALSE
+  )
+  return(latex_table)
+}
+```
+
+## EWCC Hidden State Inference (HSI) Table
+
+```{r}
+## --- Your models ---
+models <- list(
+  rb_r7_EWCC_diffuse,
+
+  rb_r9_EWCC_diffuse,
+
+  rb_r14_EWCC_diffuse
+
+)
+
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+model_names <- paste0("M", seq_along(models))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  gof_map     = NA,          # <- disables GOF retrieval & removes warnings
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+## --- Group headers (unchanged) ---
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$DQ_o^{HSI}$" = 2:2,
+
+    "$DQ_s^{HSI}$" = 3:3,
+
+    "$RT^{HSI}$"   = 4:4
+
+  )
+)
+
+writeLines(as.character(latex_table), "EWCC_HSI.tex")
+```
+
+## EWCC Future Forecasting (FF) Table
+
+```{r}
+## --- Your models ---
+models <- list(
+
+  rb_r8_EWCC_diffuse,
+
+  rb_r10_EWCC_diffuse,
+
+  rb_r15_EWCC_diffuse
+)
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+model_names <- paste0("M", seq_along(models))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  metrics     = "none",
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+## --- Group headers (unchanged) ---
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+
+    "$DQ_o^{FF}$"  = 2:2,
+
+    "$DQ_s^{FF}$"  = 3:3,
+
+    "$RT^{FF}$"    = 4:4
+  )
+)
+
+writeLines(as.character(latex_table), "EWCC_FF.tex")
+
+```
+
+## MDCC HSI Table
+
+```{r}
+## --- Your models ---
+models <- list(
+  rb_r7_MDCC_diffuse,
+
+  rb_r9_MDCC_diffuse,
+
+  rb_r14_MDCC_diffuse
+
+)
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+model_names <- paste0("M", seq_along(models))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  metrics     = "none",
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+## --- Group headers (unchanged) ---
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$DQ_o^{HSI}$" = 2:2,
+
+    "$DQ_s^{HSI}$" = 3:3,
+
+    "$RT^{HSI}$"   = 4:4
+
+  )
+)
+
+writeLines(as.character(latex_table), "MDCC_HSI.tex")
+```
+
+## MDCC FF Table
+
+```{r}
+## --- Your models ---
+models <- list(
+
+  rb_r8_MDCC_diffuse,
+
+  rb_r10_MDCC_diffuse,
+
+  rb_r15_MDCC_diffuse
+)
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+model_names <- paste0("M", seq_along(models))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  metrics     = "none",
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+## --- Group headers (unchanged) ---
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+
+    "$DQ_o^{FF}$"  = 2:2,
+
+    "$DQ_s^{FF}$"  = 3:3,
+
+    "$RT^{FF}$"    = 4:4
+  )
+)
+
+writeLines(as.character(latex_table), "MDCC_FF.tex")
+```
+
+## HSI Response Time Table
+
+```{r}
+models <- list(
+  rb_r14_EWCC_diffuse,
+  rb_r14_MDCC_diffuse
+)
+
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  metrics     = "none",
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$RT_{EWCC}$" = 2:2,
+    "$RT_{MDCC}$" = 3:3
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "responseTime_HSI.tex")
+```
+
+## FF Response Time Table
+
+```{r}
+models <- list(
+  rb_r15_EWCC_diffuse,
+  rb_r15_MDCC_diffuse
+)
+
+## Recompute N and rebuild add_rows
+Ns  <- vapply(models, safe_nobs, integer(1))
+R2s <- vapply(models, safe_bayes_r2, numeric(1))
+LLs <- vapply(models, safe_ll,      numeric(1))
+
+add_rows_df <- tibble::tibble(term = c("$N$", "$R^2_{\\text{Bayes}}$", "$\\mathrm{LL}$")) |>
+  dplyr::bind_cols(
+    setNames(as_tibble(rbind(
+      fmt0(Ns),
+      fmt3(R2s),
+      fmt3(LLs)
+    )), model_names)
+  )
+
+## Pass `model_names` & `add_rows` (unchanged otherwise)
+latex_table <- modelsummary(
+  models,
+  statistic   = c("conf.int"),
+  fmt         = 3,
+  coef_rename = nameList,
+  metrics     = "none",
+  model_names = model_names,
+#  gof_omit    = "R2|IC|Adj|F|RMSE",
+  add_rows    = add_rows_df,
+  output      = "latex",
+  escape      = FALSE
+)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$RT_{EWCC}$" = 2:2,
+    "$RT_{MDCC}$" = 3:3
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "responseTime_FF.tex")
+```
+
+## DQ Instance Sequence Table
+
+```{r}
+models <- list(
+  rb_r16_DQ_o_insSeq_diffuse,
+  rb_r17_DQ_s_insSeq_diffuse,
+  rb_r19_DQ_o_insSeq_diffuse,
+  rb_r20_DQ_s_insSeq_diffuse
+)
+
+latex_table <- make_latex_table(models, nameList)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$DQ_o^{HSI}$" = 2:2,
+    "$DQ_s^{HSI}$" = 3:3,
+    "$DQ_o^{FF}$" = 4:4,
+    "$DQ_s^{FF}$" = 5:5
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "InstanceSeq_DQ.tex")
+```
+
+## RT Instance Sequence Table
+
+```{r}
+
+models <- list(
+  rb_r18_RT_U_insSeq_diffuse,
+  rb_r21_RT_C_insSeq_diffuse
+)
+
+latex_table <- make_latex_table(models, nameList)
+
+# Add grouped headers
+latex_table <- group_tt(
+  latex_table,
+  j = list(
+    "$RT_{HSI}$" = 2:2,
+    "$RT_{FF}$" = 3:3
+  )
+)
+
+# Convert to character string if needed
+latex_string <- as.character(latex_table)
+
+# Write to .tex file
+writeLines(latex_string, "InstanceSeq_RT.tex")
+```
+
+```{r}
+# install.packages(c("knitr","kableExtra"))  # if needed
+library(brms)
+library(insight)
+library(dplyr)
+library(tibble)
+library(knitr)
+#install.packages("kableExtra")
+library(kableExtra)
+
+make_kable_ci_stars <- function(models,
+                                name_map      = NULL,   # named vector: original -> LaTeX label
+                                conf.level    = 0.95,
+                                digits        = 3,
+                                model_names   = NULL,   # e.g., c("$M_1$","$M_2$")
+                                group_labels  = NULL,   # e.g., c("$RT_{HSI}$","$RT_{FF}$")
+                                group_counts  = NULL,   # e.g., c(1,1) sum==length(models)
+                                file          = NULL) { # e.g., "models_ci_stars.tex"
+
+  stopifnot(length(models) >= 1)
+  if (is.null(model_names)) model_names <- paste0("M", seq_along(models))
+
+  ## ---- helpers: robust GOF ----
+  safe_nobs <- function(m) {
+    n <- suppressWarnings(tryCatch(insight::nobs(m), error = function(e) NA_integer_))
+    if (is.na(n) || !is.finite(n) || n <= 0)
+      n <- suppressWarnings(tryCatch(nrow(insight::get_data(m, effects = "fixed", verbose = FALSE)),
+                                     error = function(e) NA_integer_))
+    if (is.na(n) || !is.finite(n) || n <= 0)
+      n <- suppressWarnings(tryCatch(ncol(brms::log_lik(m)), error = function(e) NA_integer_))
+    n
+  }
+  safe_bayes_r2 <- function(m) tryCatch({
+    d <- as.numeric(brms::bayes_R2(m, summary = FALSE))
+    if (length(d) == 0 || anyNA(d)) as.numeric(brms::bayes_R2(m, summary = TRUE)[,"Estimate"]) else mean(d)
+  }, error = function(e) NA_real_)
+  safe_ll <- function(m) tryCatch({
+    ll <- brms::log_lik(m); sum(colMeans(ll))
+  }, error = function(e) NA_real_)
+
+  ## ---- extract fixed effects with CrI ----
+  probs <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+  one_model_tbl <- function(m) {
+    s <- as.data.frame(brms::posterior_summary(m, probs = probs))
+    tibble(term = rownames(s),
+           estimate = s[,"Estimate"],
+           low      = s[,3],
+           high     = s[,4]) |>
+      filter(grepl("^b_", term)) |>
+      mutate(term = sub("^b_", "", term))
+  }
+
+  tlist     <- lapply(models, one_model_tbl)
+  all_terms <- unique(unlist(lapply(tlist, `[[`, "term")))
+
+  ## order by name_map if supplied
+  if (!is.null(name_map)) {
+    nm_keys   <- sub("^b_", "", names(name_map))
+    all_terms <- unique(c(nm_keys[nm_keys %in% all_terms], setdiff(all_terms, nm_keys)))
+  }
+
+  ## LaTeX row labels
+  map_label <- function(x) {
+    if (is.null(name_map)) return(x)
+    nm <- setNames(name_map, sub("^b_", "", names(name_map)))
+    ifelse(x %in% names(nm), unname(nm[x]), x)
+  }
+  row_labels <- map_label(all_terms)
+
+  ## ---- build character columns: "β* [l, u]" ----
+  mkcol <- function(df) {
+    df2  <- tibble(term = all_terms) |> left_join(df, by = "term")
+    sig  <- with(df2, !is.na(low) & !is.na(high) & (low * high > 0))
+    star <- ifelse(sig, "$^{\\ast}$", "")
+    # second line for credible interval
+    cell <- sprintf("\\makecell{%.3f%s \\\\ \\footnotesize{[%.3f, %.3f]}}",
+                df2$estimate, star, df2$low, df2$high)
+    cell[is.na(df2$estimate)] <- ""
+    cell
+  }
+  cols <- lapply(tlist, mkcol)
+
+  ## ---- assemble main table ----
+  tab <- tibble(Term = row_labels)
+  for (j in seq_along(models)) tab[[model_names[j]]] <- cols[[j]]
+
+  ## ---- append GOF rows ----
+  Ns  <- vapply(models, safe_nobs,     integer(1))
+  R2s <- vapply(models, safe_bayes_r2, numeric(1))
+  LLs <- vapply(models, safe_ll,       numeric(1))
+
+  f0 <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = 0))
+  fD <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = digits))
+
+  tab <- bind_rows(
+    tab,
+    tibble(Term = "\\midrule $N$",                     !!!setNames(as.list(f0(Ns)),  model_names)),
+    tibble(Term = "$R^2_{\\text{Bayes}}$",   !!!setNames(as.list(fD(R2s)), model_names)),
+    tibble(Term = "$\\mathrm{LL}$",          !!!setNames(as.list(fD(LLs)), model_names))
+  )
+
+  ## ---- render with kable + kableExtra (booktabs, math preserved) ----
+  names(tab)[1] <- ""  # Remove "Term" column header
+  kbl <- knitr::kable(
+    tab,
+    format   = "latex",
+    booktabs = TRUE,
+    escape   = FALSE,
+    align    = c("l", rep("c", ncol(tab)-1))
+  )
+
+  ## optional grouped headers across model columns
+  if (!is.null(group_labels) && !is.null(group_counts)) {
+    stopifnot(length(group_labels) == length(group_counts),
+              sum(group_counts) == length(models))
+    # add a blank span for the "Term" column
+    header_vec <- c(" " = 1, stats::setNames(as.list(group_counts), group_labels))
+    kbl <- kbl |> kableExtra::add_header_above(header_vec, escape = FALSE)
+  }
+
+  ## write to file if requested
+  if (!is.null(file)) writeLines(as.character(kbl), con = file)
+  kbl <- paste0("\\begingroup\n\\onehalfspacing\n", 
+              as.character(kbl), 
+              "\n\\endgroup")
+  return(kbl)  # knitr_kable object; use as.character(kbl) for raw LaTeX
+}
+```
+
+```{r}
+nameList <- c("b_Intercept" = "$Intercept$", "b_ACC_u" = "$ACC_u$", "b_ACC_c" = "$ACC_c$", "b_CC_u" = "$CC_u$", "b_CC_c" = "$CC_c$", "sd_participantID__Intercept" = "$sd(pID)$", "b_urns_trans" = "$urns$", "b_colours_trans" = "$cols$", "b_seqBall_trans"="$ballSeq$", "b_DV_seqBall_2"="$DV(seq=2)$", "b_DV_seqBall_3" = "$DV(seq=3)$", "b_instanceSeq" = "$Instance Sequence$")
+
+kbl <- make_kable_ci_stars(
+  models       = list(rb_r18_RT_U_insSeq_diffuse, rb_r21_RT_C_insSeq_diffuse),
+  name_map     = nameList,
+  conf.level   = 0.95,
+  digits       = 3,
+  model_names  = c("$(1)$","$(2)$"),
+  group_labels = c("$RT_{HSI}$","$RT_{FF}$"),
+  group_counts = c(1,1),
+  file         = "InstanceSeq_RT.tex"
+)
+```
+

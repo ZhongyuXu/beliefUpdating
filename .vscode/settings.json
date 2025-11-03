@@ -32,5 +32,35 @@
       "property": "#66CCFF"
     }
   },
-  "notebook.output.textColor": "#66CCFF"
+  "notebook.output.textColor": "#66CCFF",
+  "r.rterm.mac": "/usr/local/bin/R",
+  "r.bracketedPaste": true,
+  "r.sessionWatcher": true,
+  "r.rmarkdown.enableCodeLens": true,
+  "markdown-preview-enhanced.enableScriptExecution": true,
+  "r.linting.cache": false,
+  "r.lsp.diagnostics": false,
+  "r.linting.lintr": false,
+  "quarto.path": "/usr/local/bin/quarto",
+  "workbench.colorCustomizations": {
+    "terminal.background": "#101520",
+    "terminal.foreground": "#E6EDF7",
+    "terminalCursor.foreground": "#FFAF00",
+    "terminal.ansiBlack": "#2A2F3A",
+    "terminal.ansiRed": "#FF5F5F",
+    "terminal.ansiGreen": "#7CFC98",
+    "terminal.ansiYellow": "#FFD580",
+    "terminal.ansiBlue": "#6CB4FF",
+    "terminal.ansiMagenta": "#DDA0FF",
+    "terminal.ansiCyan": "#66FFE3",
+    "terminal.ansiWhite": "#F6F7F9",
+    "terminal.ansiBrightBlack": "#414857",
+    "terminal.ansiBrightRed": "#FF7A7A",
+    "terminal.ansiBrightGreen": "#9BFFB7",
+    "terminal.ansiBrightYellow": "#FFE8A3",
+    "terminal.ansiBrightBlue": "#8DD1FF",
+    "terminal.ansiBrightMagenta": "#F0B3FF",
+    "terminal.ansiBrightCyan": "#8CFFF2",
+    "terminal.ansiBrightWhite": "#FFFFFF"
+  }
 }
