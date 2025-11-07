@@ -855,32 +855,42 @@ bfplot <- function(
 ## Calculate Bayes Factor
 
 ```{r}
-# Returns Bayes Factor of Model_A Vs Model B
 calculate_bayes_factor <- function(model_A, model_B) {
-  # Ensure the bridgesampling package is available
   if (!requireNamespace("bridgesampling", quietly = TRUE)) {
-    stop("Package 'bridgesampling' is required. Please install it with install.packages('bridgesampling').")
+    stop("Please install the 'bridgesampling' package.")
   }
-  
-  # Compute marginal likelihoods for each model
-  bridge_A <- bridgesampling::bridge_sampler(model_A)
-  bridge_B <- bridgesampling::bridge_sampler(model_B)
-  
-  # Calculate Bayes factor of Model A vs Model B
+
+  suppress_iter_output <- function(expr) {
+    # Suppress printed output (like Iteration: ...)
+    # but allow warnings to still show
+    tmp <- tempfile()
+    sink(tmp)
+    on.exit({
+      sink()
+      unlink(tmp)
+    })
+    result <- withCallingHandlers(expr, warning = function(w) {
+      # Print warning messages normally
+      warning(conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+    return(result)
+  }
+
+  bridge_A <- suppress_iter_output(bridgesampling::bridge_sampler(model_A, silent = TRUE, maxiter = 2000))
+  bridge_B <- suppress_iter_output(bridgesampling::bridge_sampler(model_B, silent = TRUE, maxiter = 2000))
+
   BF_AB <- bridgesampling::bf(bridge_A, bridge_B)$bf
-  
-  # Apply formatting rules
+
   formatted_BF <- if (BF_AB < 0.001 || BF_AB > 100) {
-    formatC(BF_AB, format = "e", digits = 1)  # scientific notation
+    formatC(BF_AB, format = "e", digits = 1)
   } else if (BF_AB < 1) {
-    formatC(BF_AB, format = "f", digits = 3)  # 3 decimal places
+    formatC(BF_AB, format = "f", digits = 3)
   } else {
-    round(BF_AB, 0)             # nearest integer
+    round(BF_AB, 0)
   }
-  
-  formatted_BF <- as.numeric(formatted_BF)
-  
-  return(formatted_BF)
+
+  return(as.numeric(formatted_BF))
 }
 ```
 
@@ -889,7 +899,9 @@ calculate_bayes_factor <- function(model_A, model_B) {
 ```{r}
 load_all_brms_models <- function(folder = "models") {
   # Ensure folder exists
-  if (!dir.exists(folder)) stop(paste("Folder not found:", folder))
+  if (!dir.exists(folder)) {
+    stop(paste("Folder not found:", folder))
+  }
   
   # List all .rds model files
   model_files <- list.files(folder, pattern = "\\.rds$", full.names = TRUE)
@@ -898,16 +910,129 @@ load_all_brms_models <- function(folder = "models") {
     stop("No .rds model files found in the specified folder.")
   }
 
-  # Load all models using brm(file = ...)
-  models <- lapply(model_files, function(f) {
-    # message("Loading model from: ", f)
-    brm(file = sub("\\.rds$", "", f))  # remove .rds extension
-  })
+  models <- list()
 
-  # Assign model names based on file names (no extension)
-  names(models) <- sub("\\.rds$", "", basename(model_files))
+  for (f in model_files) {
+    model_name <- sub("\\.rds$", "", basename(f))
+    model_path <- sub("\\.rds$", "", f)  # brm() expects path without extension
+
+    # Try to load model, catch error if not a brms model
+    loaded_model <- tryCatch(
+      {
+        brm(file = model_path)
+      },
+      error = function(e) {
+        message(sprintf("Skipping '%s': %s", f, e$message))
+        NULL
+      }
+    )
+
+    if (!is.null(loaded_model)) {
+      models[[model_name]] <- loaded_model
+    }
+  }
+
+  if (length(models) == 0) {
+    warning("No valid brms models were loaded.")
+  }
 
   return(models)
+}
+```
+
+## Check Convergence
+
+```{r}
+# R hat is smaller than 1.1
+# ESS is larger than 3000
+
+check_convergence <- function(model) {
+  summ <- summary(model)
+
+  # Combine fixed and random Rhat & ESS
+  rhat_vals <- c(summ$fixed$Rhat, summ$random$Rhat)
+  # If there's more than one fixed effect (i.e., not just intercept)
+  if (nrow(summ$fixed) > 1) {
+    ess_vals <- c(summ$fixed$Bulk_ESS[2:nrow(summ$fixed)], summ$random$Bulk_ESS)
+  } else {
+    # Only intercept, so just use random effects (or nothing if those are also missing)
+    ess_vals <- c(summ$fixed$Bulk_ESS, summ$random$Bulk_ESS)
+  }
+  
+  message(deparse(substitute(model))," ESS: ",ess_vals)
+  message(deparse(substitute(model))," R_hat: ", rhat_vals)
+
+  # Proper assignment and robust checks
+  rhat_ok <- all(rhat_vals < 1.1, na.rm = TRUE)
+  ess_ok  <- all(ess_vals > 3000, na.rm = TRUE)
+  all_ok  <- rhat_ok && ess_ok
+
+  return(all_ok)
+}
+
+```
+
+## Model Comparison
+
+We pre-registered both intercept-only random-effects models and intercept-plus-random-slope models for each Bayesian regression. When the more complex model achieved satisfactory convergence ($\hat{R} \approx 1$, $ESS > 4{,}000$), we conducted model selection based on the Bayes factor (BF). Specifically, placing the intercept-plus-slope model in the numerator, the more complex model was preferred if $BF > 3$; otherwise, the simpler intercept-only model was selected.
+
+```{r}
+compare_models <- function(models) {
+  if (!requireNamespace("bridgesampling", quietly = TRUE)) {
+    stop("Please install the 'bridgesampling' package.")
+  }
+
+  # Use names directly because list is named!
+  model_names <- names(models)
+  base_names <- unique(gsub("_rs$", "", model_names))
+  selected_models <- list()
+
+  for (base in base_names) {
+    int_name <- base
+    slope_name <- paste0(base, "_rs")
+    
+    model_int <- models[[int_name]]
+    if (is.null(model_int)) {
+      warning("Missing intercept model for ", base)
+      next
+    }
+
+    conv_int <- check_convergence(model_int)
+    
+    if (!slope_name %in% model_names) {
+        # No slope model → use intercept
+        selected_models[[base]] <- model_int
+      if (conv_int){
+        message("Selected: ", int_name, " (no slope model found)")        
+      }else {
+        warning("Neither model converged for ", base, ", Intercept model selected")
+      }
+      next
+    }
+    
+    model_slope <- models[[slope_name]]
+    conv_slope <- check_convergence(model_slope)
+
+    if (conv_slope) {
+      bf <- calculate_bayes_factor(model_slope, model_int)
+      if (bf > 3) {
+        selected_models[[slope_name]] <- model_slope
+        message("Selected: ", slope_name, " (BF = ", bf, ")")
+      } else {
+        selected_models[[base]] <- model_int
+        message("Selected: ", int_name, " (BF = ", bf, ")")
+      }
+    } else {
+      if (conv_int) {
+        selected_models[[base]] <- model_int
+        message("Selected: ", int_name, " (slope model failed convergence)")
+      } else {
+        warning("Neither model converged for ", base)
+      }
+    }
+  }
+
+  return(selected_models)
 }
 ```
 
@@ -1625,83 +1750,16 @@ if (BF_1515c_rs[1] > 3) {
 models = load_all_brms_models()
 ```
 
-```{r}
-print(summary(models$r12c2_diffuse))
-```
-
 # Model Comparison
 
 We pre-registered both intercept-only random-effects models and intercept-plus-random-slope models for each Bayesian regression. When the more complex model achieved satisfactory convergence ($\hat{R} \approx 1$, $ESS > 4{,}000$), we conducted model selection based on the Bayes factor (BF). Specifically, placing the intercept-plus-slope model in the numerator, the more complex model was preferred if $BF > 3$; otherwise, the simpler intercept-only model was selected.
 
 ```{r}
-compare_models <- function(models) {
-  if (!requireNamespace("bridgesampling", quietly = TRUE)) {
-    stop("Please install the 'bridgesampling' package.")
-  }
-
-  # Use names directly because list is named!
-  model_names <- names(models)
-  base_names <- unique(gsub("_rs$", "", model_names))
-  selected_models <- list()
-
-  check_convergence <- function(model) {
-    summ <- summary(model)
-    rhat_vals <- c(summ$fixed$Rhat, summ$random$Rhat)
-    ess_vals <- c(summ$fixed$ESS_bulk, summ$random$ESS_bulk)
-    list(
-      rhat_ok = all(rhat_vals <= 1.01, na.rm = TRUE),
-      ess_ok = all(ess_vals > 4000, na.rm = TRUE),
-      all_ok = all(rhat_vals <= 1.01, na.rm = TRUE) && all(ess_vals > 4000, na.rm = TRUE)
-    )
-  }
-
-  for (base in base_names) {
-    int_name <- base
-    slope_name <- paste0(base, "_rs")
-
-    model_int <- models[[int_name]]
-
-    if (is.null(model_int)) {
-      warning("Missing intercept model for ", base)
-      next
-    }
-
-    if (!slope_name %in% model_names) {
-      # No slope model → use intercept
-      selected_models[[base]] <- model_int
-      message("Selected: ", int_name, " (no slope model found)")
-      next
-    }
-
-    model_slope <- models[[slope_name]]
-    conv_slope <- check_convergence(model_slope)
-
-    if (conv_slope$all_ok) {
-      bf <- calculate_bayes_factor(model_slope, model_int)
-      if (bf > 3) {
-        selected_models[[base]] <- model_slope
-        message("Selected: ", slope_name, " (BF = ", bf, ")")
-      } else {
-        selected_models[[base]] <- model_int
-        message("Selected: ", int_name, " (BF = ", bf, ")")
-      }
-    } else {
-      conv_int <- check_convergence(model_int)
-      if (conv_int$all_ok) {
-        selected_models[[base]] <- model_int
-        message("Selected: ", int_name, " (slope model failed convergence)")
-      } else {
-        warning("Neither model converged for ", base)
-      }
-    }
-  }
-
-  return(selected_models)
-}
+winning_models <- compare_models(models)
 ```
 
+## Save the Winning models
+
 ```{r}
-winning_models = compare_models(models)
-unique(gsub("_rs$", "", names(models)))[1]
-models[unique(gsub("_rs$", "", names(models)))[1]]
+saveRDS(winning_models, file = "models/winning_models.rds")
 ```

@@ -1,0 +1,2065 @@
+---
+title: "Bayesian Regressions"
+output: html_document
+date: "2025-10-29"
+---
+
+# Notes
+
+1.  Include ESS and RHat description in every table manually - Credible interval is based on probability density (mode and HDI) or quantiles (median and ETI)? -- Quantiles
+    -   highest-density intervals (HDIs), I recommend15 that ESS ≥ 10,000. (Kruschke, 2021)
+
+    -   For stable estimates of limits of equal-tailed intervals, ESS can be lower. The central tendency can be stably estimated with smaller ESS (when the central tendency is in a high-density region of the distribution. (Gong & Flegal, 2016) suggests ESS\>=4,000 is sufficient threshold for high dimensional models
+2.  Graphical representation of posteriors - done
+3.  Posterior predictive check - done
+4.  Posterior model probability as a function of prior model probability with (different or computed) Bayes Factors -done
+5.  Check if I can use other diffuse priors to produce the same result as sensitivity analysis.
+
+# Pre-embles
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = dirname(getwd()))
+
+# install.packages("posterior")
+
+knitr::opts_chunk$set(echo = TRUE)
+library(brms)
+library(dplyr)
+library(coda)
+library(tidyverse)
+library(bayesplot)
+library(insight)
+library(tibble)
+library(knitr)
+library(kableExtra)
+library(posterior)
+library(ggplot2)
+library(tidyr)
+library(here)
+
+
+
+# Set Colour Palette
+COLORS = c("#1A7B56", "#648574","#5CB77D", "#5DB8AB","#96BBB8","#D9DCD4",
+          "#1A7B56", "#648574","#5CB77D", "#5DB8AB","#96BBB8","#D9DCD4",
+          "#1A7B56", "#648574","#5CB77D", "#5DB8AB","#96BBB8","#D9DCD4",
+          "#1A7B56", "#648574","#5CB77D", "#5DB8AB","#96BBB8","#D9DCD4")
+
+# Set Variable Name Dict
+nameList <- c("b_Intercept" = "$Intercept$", "b_ACC_u" = "$ACC_{HSI}$", "b_ACC_c" = "$ACC_{FF}$", "b_CC_u" = "$CC_{HSI}$", "b_CC_c" = "$CC_{FF}$", "sd_participantID__Intercept" = "$sd(pID)$", "b_urns_trans" = "$States$", "b_colours_trans" = "$pSignals$", "b_seqBall_trans"="$sDraws$", "b_DV_seqBall_1"="$DV(sDraws=1)$", "b_DV_seqBall_2"="$DV(sDraws=2)$", "b_DV_seqBall_3" = "$DV(sDraws=3)$", "b_instanceSeq" = "$insSeq$","instanceSeq" = "$insSeq$")
+
+nameList_R <- c("DQ_U_o" = "Overall Decision Quality (HSI)", "DQ_C_o" = "Overall Decision Quality (FF)", "DQ_U_s" = "Step-wise Decision Quality (HSI)", "DQ_C_s" = "Step-wise Decision Quality (FF)", "b_Intercept" = "Intercept", "b_ACC_u" = "ACC_u", "b_ACC_c" = "ACC_c", "b_CC_u" = "CC_u", "b_CC_c" = "CC_c", "sd_participantID__Intercept" = "sd(pID)", "b_urns_trans" = "States", "b_colours_trans" = "Potential Signals", "b_seqBall_trans"="Ball Sequence", "b_DV_seqBall_2"="DV(seq=2)", "b_DV_seqBall_3" = "DV(seq=3)", "b_instanceSeq" = "Instance Sequence","instanceSeq" = "Instance Sequence")
+```
+
+# Read Data
+
+```{r}
+participant_data <- read.csv("data/participant_data_long.csv")
+# winning_models <- readRDS("models/winning_models.rds")
+```
+
+# Transform Data
+
+To fit Bayesian regression, it is the best practice to standardize the regressors
+
+```{r}
+n <- nrow(participant_data)
+participant_data <- participant_data %>%
+  mutate(
+    urns_trans    = as.numeric(scale(urns)),
+    colours_trans = as.numeric(scale(colours)),
+    seqBall_trans = as.numeric(scale(seqBall)),
+    ACC_u_trans = as.numeric(scale(ACC_u)),
+    ACC_c_trans = as.numeric(scale(ACC_c)),
+    CC_u_trans = as.numeric(scale(CC_u)),
+    CC_c_trans = as.numeric(scale(CC_c)),
+  )
+```
+
+To fit a Beta regression, decision quality values must lie strictly between 0 and 1. We transform all decision quality values equal to 0 to 10\^{-10}, and those equal to 1 to (1 - 10\^{-10})
+
+```{r}
+# Specify the column names to transform
+cols <- c("DQ_U_o", "DQ_U_s", "DQ_C_o", "DQ_C_s")
+
+# Apply the transformation to each specified column in participant_data
+participant_data[cols] <- lapply(participant_data[cols], function(x) {
+  ifelse(x == 0, 10^(-1), ifelse(x == 1, 1 - 10^(-1), x))
+})
+
+```
+
+# Define Functions
+
+## Set Priors
+
+```{r}
+makePrior <- function(family = "beta", priorType = "d", interceptOnly = FALSE, randomSlope = FALSE) {
+  #----------------------------------------------------------
+  # ✅ Input hints and validation
+  #----------------------------------------------------------
+  allowed_families <- c("beta", "gamma")
+  allowed_prior_types <- c("d", "wi1", "wi2")
+
+  if (!family %in% allowed_families) {
+    stop(paste0(
+      "❌ Invalid 'family' argument.\n",
+      "Allowed values: ", paste(allowed_families, collapse = ", ")
+    ))
+  }
+
+  if (!priorType %in% allowed_prior_types) {
+    stop(paste0(
+      "❌ Invalid 'priorType' argument.\n",
+      "Allowed values: ", paste(allowed_prior_types, collapse = ", ")
+    ))
+  }
+
+  #----------------------------------------------------------
+  # ✅ Define all priors (copied from your definitions)
+  #----------------------------------------------------------
+  diffuse_priors_beta <- c(
+    set_prior("normal(0, 1000000)", class = "b"),
+    set_prior("normal(0, 1000000)", class = "Intercept"),
+    set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+    set_prior("gamma(2, 0.1)", class = "phi"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  weaklyInformative1_priors_beta <- c(
+    set_prior("normal(0, 100)", class = "b"),
+    set_prior("normal(0, 1000000)", class = "Intercept"),
+    set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+    set_prior("gamma(10, 0.5)", class = "phi"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  weaklyInformative2_priors_beta <- c(
+    set_prior("normal(0, 1)", class = "b"),
+    set_prior("normal(0, 1000000)", class = "Intercept"),
+    set_prior("cauchy(0, 1)", class = "sd", lb = 0),
+    set_prior("gamma(20, 1)", class = "phi"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  diffuse_priors_gamma <- c(
+    prior(normal(0, 1000000), class = "b"),
+    prior(normal(0, 1000000), class = "Intercept"),
+    prior(gamma(0.01, 0.01), class = "shape"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  weaklyInformative1_priors_gamma <- c(
+    prior(normal(0, 100), class = "b"),
+    prior(normal(0, 1000000), class = "Intercept"),
+    prior(gamma(0.01, 0.01), class = "shape"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  weaklyInformative2_priors_gamma <- c(
+    prior(normal(0, 1), class = "b"),
+    prior(normal(0, 1000000), class = "Intercept"),
+    prior(gamma(0.01, 0.01), class = "shape"),
+    set_prior("lkj(1)", class = "cor")
+  )
+
+  #----------------------------------------------------------
+  # ✅ Select the correct prior set based on inputs
+  #----------------------------------------------------------
+  if (family == "beta") {
+    priors <- switch(priorType,
+                     "d"   = diffuse_priors_beta,
+                     "wi1" = weaklyInformative1_priors_beta,
+                     "wi2" = weaklyInformative2_priors_beta)
+  } else if (family == "gamma") {
+    priors <- switch(priorType,
+                     "d"   = diffuse_priors_gamma,
+                     "wi1" = weaklyInformative1_priors_gamma,
+                     "wi2" = weaklyInformative2_priors_gamma)
+  }
+
+  #----------------------------------------------------------
+  # ✅ Adjust prior list for model structure
+  #----------------------------------------------------------
+  if (isTRUE(interceptOnly)) {
+    # This removes the first and last row of the priors list
+    priors <- priors[-c(1, nrow(priors)), , drop = FALSE]
+  } else if (isFALSE(randomSlope)) {
+    # This removes the last row of the prior list
+    priors <- priors[-nrow(priors), , drop = FALSE]
+  }
+
+  #----------------------------------------------------------
+  # ✅ Return the final cleaned prior list
+  #----------------------------------------------------------
+  return(priors)
+}
+
+options(brms.verbose = FALSE)
+```
+
+## Posterior Predictive Check
+
+```{r}
+posteriorPredictiveCheck <- function(brms_model, stat = "hist", ndraws = 1000) {
+  # Requires: COLORS, nameList
+
+  # Capture model name
+  model_name <- deparse(substitute(brms_model))
+
+  # Rename dependent variable
+  outcome_var <- as.character(brms_model$formula$formula[[2]])
+  outcome_name <- if (outcome_var %in% names(nameList_R)) nameList_R[[outcome_var]] else outcome_var
+  observed <- brms_model$data[[outcome_var]]
+
+  # Posterior predictive draws
+  yrep <- posterior_predict(brms_model, draws = ndraws)
+  predVec <- as.vector(yrep)
+
+  # Plot settings
+  oldPar <- par(no.readonly = TRUE)
+  on.exit(par(oldPar))
+  par(mfrow = c(1, 1), mar = c(5, 5, 4, 2) + 0.1, oma = c(0, 0, 0, 0),
+      cex.lab = 1.2, cex.axis = 1, family = "serif")  # Apply LaTeX-style font
+
+  if (stat == "density") {
+    plot(density(observed), lwd = 2, col = COLORS[1],
+         main = model_name,
+         xlab = outcome_name, ylab = "Density",
+         xlim = range(c(observed, predVec)))
+    lines(density(predVec), lwd = 2, col = COLORS[2])
+    legend("topleft", legend = c("Observed", "Predicted"),
+           col = COLORS[1:2], lwd = 2, bty = "n")
+
+  } else if (stat == "hist") {
+    # Create breaks
+    combined_range <- range(c(observed, predVec))
+    breaks <- pretty(combined_range, n = 20)
+
+    # Histograms
+    h_obs  <- hist(observed, breaks = breaks, plot = FALSE)
+    h_pred <- hist(predVec,  breaks = breaks, plot = FALSE)
+
+    # Plot observed
+    plot(h_obs, col = COLORS[1], freq = FALSE,
+         main = model_name,
+         xlab = outcome_name, ylab = "Density",
+         ylim = range(0, h_obs$density, h_pred$density))
+
+    # Overlay predicted
+    plot(h_pred, col = adjustcolor(COLORS[2], alpha.f = 0.6),
+         freq = FALSE, add = TRUE)
+
+    # Credible intervals
+    bin_densities <- apply(yrep, 1, function(y) hist(y, breaks = breaks, plot = FALSE)$density)
+    bin_cis <- apply(bin_densities, 1, function(x) quantile(x, probs = c(0.025, 0.975), na.rm = TRUE))
+
+    mids <- h_obs$mids
+    for (i in seq_along(mids)) {
+      lines(c(mids[i], mids[i]), bin_cis[, i], col = COLORS[3], lwd = 2)
+    }
+
+    legend("topleft", legend = c("Observed", "Predicted"),
+           fill = COLORS[1:2], bty = "n")
+  } else {
+    stop("Unsupported stat type. Use 'density' or 'hist'")
+  }
+
+  invisible(yrep)
+}
+
+
+
+
+posteriorPredictiveCheck_gg <- function(brms_model, 
+                                        stat = "hist", 
+                                        ndraws = 1000, 
+                                        dpi = 300,
+                                        width = 7,
+                                        height = 5,
+                                        bins = 20) {
+
+  model_name <- deparse(substitute(brms_model))
+  outcome_var <- as.character(brms_model$formula$formula[[2]])
+  outcome_name <- if (exists("nameList_R") && outcome_var %in% names(nameList_R)) {
+    nameList_R[[outcome_var]]
+  } else {
+    outcome_var
+  }
+
+  observed <- brms_model$data[[outcome_var]]
+  yrep <- posterior_predict(brms_model, draws = ndraws)
+  predVec <- as.vector(yrep)
+
+  if (stat == "hist") {
+    # Bin structure
+    combined_range <- range(c(observed, predVec))
+    breaks <- pretty(combined_range, n = bins)
+    mids <- 0.5 * (head(breaks, -1) + tail(breaks, -1))
+    bin_width <- diff(breaks)[1]
+
+    # Observed histogram
+    h_obs <- hist(observed, breaks = breaks, plot = FALSE)
+
+    # Posterior bin densities per draw
+    bin_densities <- apply(yrep, 1, function(y)
+      hist(y, breaks = breaks, plot = FALSE)$density
+    )
+
+    # Credible intervals per bin
+    bin_cis <- apply(bin_densities, 1, quantile, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+    ci_df <- tibble(
+      x = mids,
+      ymin = bin_cis[1, ],
+      ymed = bin_cis[2, ],
+      ymax = bin_cis[3, ]
+    )
+
+    # Plot
+    df_hist_obs <- tibble(x = mids, density = h_obs$density, type = "Observed")
+
+    p <- ggplot() +
+      geom_col(data = ci_df, aes(x = x, y = ymed, fill = "Predicted"),
+               width = bin_width, alpha = 0.6) +
+      geom_col(data = df_hist_obs, aes(x = x, y = density, fill = "Observed"),
+               width = bin_width, alpha = 0.6) +
+      geom_linerange(data = ci_df, aes(x = x, ymin = ymin, ymax = ymax),
+                     color = COLORS[3], linewidth = 1.2) +
+      scale_fill_manual(values = adjustcolor(COLORS[1:2], alpha.f = 0.6)) +
+      labs(title = paste("Posterior Predictive Check:", model_name),
+           x = outcome_name, y = "Density") +
+      theme_minimal(base_family = "serif") +
+      theme(
+        plot.title = element_text(size = 14, face = "bold"),
+        legend.title = element_blank(),
+        legend.position = c(0.05, 0.9),  # ← Top-left corner (tweak if needed)
+        legend.justification = c("left", "top"),
+      )
+
+  } else if (stat == "density") {
+    xseq <- seq(min(c(observed, predVec)), max(c(observed, predVec)), length.out = 200)
+    density_mat <- sapply(1:ndraws, function(i) {
+      d <- density(yrep[i, ], from = min(xseq), to = max(xseq), n = length(xseq))
+      approx(d$x, d$y, xout = xseq)$y
+    })
+
+    ci_df <- apply(density_mat, 1, quantile, probs = c(0.025, 0.975), na.rm = TRUE)
+    ci_df <- as.data.frame(t(ci_df))
+    names(ci_df) <- c("low", "high")
+    ci_df$x <- xseq
+
+    df_obs <- tibble(value = observed, type = "Observed")
+    df_pred <- tibble(value = predVec, type = "Predicted")
+
+    p <- ggplot() +
+      geom_ribbon(data = ci_df, aes(x = x, ymin = low, ymax = high),
+                  fill = adjustcolor(COLORS[2], alpha.f = 0.3)) +
+      geom_density(data = df_pred, aes(x = value, color = "Predicted"),
+                   linewidth = 1.2, alpha = 0.7) +
+      geom_density(data = df_obs, aes(x = value, color = "Observed"),
+                   linewidth = 1.2) +
+      scale_color_manual(values = COLORS[1:2]) +
+      labs(title = paste("Posterior Predictive Check:", model_name),
+           x = outcome_name, y = "Density") +
+      theme_minimal(base_family = "serif") +
+      theme(
+        plot.title = element_text(size = 14, face = "bold"),
+        legend.title = element_blank(),
+        legend.position = c(0.05, 0.9),  # ← Top-left corner (tweak if needed)
+        legend.justification = c("left", "top"),
+      )
+  } else {
+    stop("Unsupported stat type. Use 'density' or 'hist'")
+  }
+
+  if (!dir.exists("images")) dir.create("images")
+  filename <- file.path("images", paste0("postPredictiveCheck_", model_name, ".png"))
+  ggsave(filename = filename, plot = p, width = width, height = height, dpi = dpi, bg = "white")
+
+  invisible(list(plot = p, yrep = yrep))
+  knitr::include_graphics(filename)
+}
+
+```
+
+## Run Bayesian Regression
+
+```{r}
+run_beta_regression <- function(formula,
+                                prior,
+                                fileName,
+                                data = participant_data,
+                                family = Beta(link = "logit"),
+                                chains = 4,
+                                iter = 2000,
+                                warmup = 1000,
+                                seed = 123,
+                                control = list(adapt_delta = 0.95),
+                                save_all_pars = TRUE,
+                                silent = TRUE,
+                                refresh = 0
+                                ) {
+  # Note: Iterations, warmup and chains are all default value
+  model <- brm(
+    formula = formula,
+    data = data,
+    family = family,
+    prior = prior,
+    chains = chains,
+    iter = iter,
+    warmup = warmup,
+    seed = seed,
+    control = control,
+    save_pars = if (save_all_pars) save_pars(all = TRUE) else NULL,
+    silent = silent,
+    refresh = refresh,
+    file = paste0("models/",fileName)
+  )
+  
+
+    print(summary(model))
+  
+  return(model)
+}
+```
+
+## Plot Posteriors
+
+```{r}
+plotPosteriorPredictors <- function(brms_model, width, height) {
+  if (!requireNamespace("posterior", quietly = TRUE)) {
+    stop("Please install the 'posterior' package: install.packages('posterior')")
+  }
+
+  # Get model name
+  model_name <- deparse(substitute(brms_model))
+
+  # Create 'images' directory if it doesn't exist
+  if (!dir.exists("images")) dir.create("images")
+
+  # Output file path
+  file_name <- paste0("images/postPlot_", model_name, ".png")
+
+  # Set up PNG output device
+  png(filename = file_name, width = width, height = height, units = "in", res = 300, family = "serif")
+
+  # Extract posterior draws
+  draws_df <- posterior::as_draws_df(brms_model)
+
+  # Get predictor names, exclude intercept
+  fixed_names <- brms_model$fit@sim$fnames_oi
+  param_names <- grep("^b_", fixed_names, value = TRUE)
+  param_names <- setdiff(param_names, "b_Intercept")
+  param_names <- intersect(param_names, colnames(draws_df))
+  if (length(param_names) == 0) stop("No non-intercept predictors found.")
+
+  # Posterior diagnostics
+  draws_subset <- posterior::as_draws_df(draws_df[, param_names, drop = FALSE])
+  diagnostics <- posterior::summarise_draws(draws_subset)[, c("variable", "rhat", "ess_bulk")]
+
+  # Shared x-axis limits from 1st–99th percentiles
+  all_draws <- unlist(draws_df[, param_names, drop = FALSE])
+  xlim_shared <- quantile(all_draws, probs = c(0.01, 0.99), na.rm = TRUE)
+
+  # Layout
+  par(
+    mfrow = c(length(param_names), 1),
+    mar = c(4.5, 4, 2, 2),
+    oma = c(2.5, 3, 3, 0),
+    family = "serif"
+  )
+
+  for (i in seq_along(param_names)) {
+    param <- param_names[i]
+    draws <- draws_df[[param]]
+    dens <- density(draws)
+    ci <- quantile(draws, probs = c(0.025, 0.975))
+    mean_val <- mean(draws)
+
+    # Plot density
+    plot(
+      dens, main = "", xlab = "", ylab = "", yaxt = "s",
+      col = COLORS[2], xlim = xlim_shared, lwd = 2,
+      cex.lab = 1.1, bty = "n"
+    )
+
+    # Add 95% CI and mean
+    abline(v = ci, col = COLORS[3], lty = 2)
+    segments(ci[1], 0, ci[2], 0, col = COLORS[3], lwd = 4)
+    points(mean_val, 0, pch = 19, col = COLORS[1])
+
+    # x-axis label
+    param_label <- ifelse(param %in% names(nameList_R), nameList_R[[param]], param)
+    title(xlab = param_label, family = "serif", cex.lab = 1.1)
+
+    # ESS & Rhat
+    ess <- round(diagnostics$ess_bulk[i])
+    rhat <- format(round(diagnostics$rhat[i], 4), nsmall = 4)
+    legend_text <- bquote(ESS == .(ess) ~ "," ~ hat(R) == .(rhat))
+    legend("top", legend = as.expression(legend_text), bty = "n", cex = 0.85, inset = 0.01, xpd = NA)
+  }
+
+  # Global labels
+  mtext("Density", side = 2, outer = TRUE, line = 1.5, cex = 1.2)
+  mtext(model_name, outer = TRUE, cex = 1.5, line = 1)
+
+  dev.off()
+  # Return inline image in Rmd
+  knitr::include_graphics(file_name)
+}
+
+
+
+
+
+plotPosteriorPredictors_ggplot <- function(brms_model, width = 7, height = 3, dpi = 300) {
+  
+  model_name <- deparse(substitute(brms_model))
+  save_path <- paste0("images/postPlot_", model_name, ".png")
+  if (!dir.exists("images")) dir.create("images")
+
+  # Extract parameter names (exclude intercept)
+  draws_df <- suppressWarnings(posterior::as_draws_df(brms_model))
+  param_names <- grep("^b_", names(draws_df), value = TRUE)
+  param_names <- setdiff(param_names, "b_Intercept")
+  if (length(param_names) == 0) stop("No non-intercept predictors found.")
+
+  # Reshape draws
+  draws_long <- draws_df |>
+    select(all_of(param_names)) |>
+    pivot_longer(cols = everything(), names_to = "variable", values_to = "value")
+
+  draws_long$parameter <- ifelse(
+    draws_long$variable %in% names(nameList_R),
+    nameList_R[draws_long$variable],
+    draws_long$variable
+  )
+
+  # Compute summary stats
+  ci_df <- draws_long |>
+    group_by(parameter) |>
+    summarise(
+      q025 = quantile(value, 0.025),
+      q975 = quantile(value, 0.975),
+      mean_val = mean(value),
+      .groups = "drop"
+    )
+
+  # Compute diagnostics correctly
+  param_vars <- unique(draws_long$variable)
+  diag_df <- posterior::summarise_draws(draws_df[, param_vars]) |>
+    mutate(
+      Rhat = format(round(rhat, 4), nsmall = 4),
+      ESS = round(ess_bulk),
+      label = paste0("ESS = ", ESS, ", R^ = ", Rhat),
+      parameter = ifelse(
+        variable %in% names(nameList_R),
+        nameList_R[variable],
+        variable
+      )
+    )
+
+  # Join diagnostics
+  draws_long <- left_join(draws_long, diag_df[, c("parameter", "label")], by = "parameter")
+
+  # Compute x-axis range
+  quant_range <- quantile(draws_long$value, probs = c(0.01, 0.99), na.rm = TRUE)
+  x_min <- min(quant_range[1], 0)
+  x_max <- max(quant_range[2], 0)
+  x_breaks <- pretty(c(x_min, x_max))
+
+  # Plot
+  p <- ggplot(draws_long, aes(x = value)) +
+    geom_density(fill = COLORS[2], alpha = 0.5, colour = COLORS[2]) +
+    geom_vline(data = ci_df, aes(xintercept = q025), colour = COLORS[3], linetype = "dashed") +
+    geom_vline(data = ci_df, aes(xintercept = q975), colour = COLORS[3], linetype = "dashed") +
+    geom_vline(data = ci_df, aes(xintercept = mean_val), colour = COLORS[1], size = 0.7) +
+    geom_text(
+      data = draws_long |> distinct(parameter, label),
+      aes(x = (x_min + x_max)/2, y = Inf, label = label),
+      vjust = 2,
+      hjust = 0.5,
+      size = 3,
+      family = "serif",
+      inherit.aes = FALSE
+    ) +
+    facet_wrap(~ parameter, scales = "fixed", ncol = 1) +
+    scale_x_continuous(breaks = x_breaks, limits = c(x_min, x_max)) +
+    labs(x = NULL, y = "Density", title = model_name) +
+    theme_minimal(base_family = "serif") +
+    theme(
+      strip.text = element_text(size = 11, face = "bold"),
+      axis.text = element_text(size = 9),
+      axis.title.y = element_text(size = 11),
+      plot.title = element_text(size = 13, face = "bold", hjust = 0.5),
+      panel.spacing = unit(1.2, "lines"),
+      plot.margin = margin(t = 30, r = 15, b = 15, l = 15),
+      legend.position = "none",
+      panel.grid.minor = element_blank()
+    )
+
+  # Save image and show in R Markdown
+  ggsave(save_path, p, width = width, height = height, dpi = dpi, bg = "white")
+  knitr::include_graphics(save_path)
+}
+```
+
+## Bayes Factor Plot
+
+🔹 1. Prior Model Probability: The prior model probability is your belief in a model being true before you see any data.
+
+🔹 2. Bayes Factor (BF): When data D are observed, the Bayes factor quantifies how much more (or less) likely those data are under one model than the other
+
+```         
+•   If $BF_{10} > 1$: Data favor the numerator model $M_1$.
+
+•   If $BF_{10} < 1$: Data favor the denominator model $M_0$.
+```
+
+🔹 3. Posterior Model Probability: After seeing the data, your belief in each model is updated via Bayes' theorem.
+
+🔹 4. What the Function's Plot Shows
+
+The x-axis: Prior probability of the numerator model $P(M_1)$
+
+The y-axis: Posterior probability of the numerator model $P(M_1 \mid D)$
+
+The curve: How different Bayes factor values "tilt" this relationship.
+
+```         
+•   When $BF_{10} = 1$: the curve is a straight 45° line (posterior = prior → no learning).
+
+•   When $BF_{10} > 1$: the curve bows upward (data support $M_1$; posterior \> prior).
+
+•   When $BF_{10} < 1$: the curve bows downward (data support $M_0$; posterior \< prior).
+```
+
+🔹 5. Putting It All Together with an Example
+
+Say:
+
+```         
+•   $BF_{10} = 10$ → data are 10× more likely under $M_1$
+
+•   Prior belief $P(M_1) = 0.20$
+```
+
+Then:
+
+$\text{Posterior Odds} = 10 \times \frac{0.20}{0.80} = 2.5$
+
+$P(M_1 \mid D) = \frac{2.5}{1 + 2.5} = 0.714$
+
+So, even though you started with a 20% belief in $M_1$, the data were strong enough to push that up to 71%.
+
+🔹 6. Example Interpretation given by the author
+
+The Bayes factor is 2.26e-05 for Diffm Homv Broad relative to Diffm Hetv Broad. To 'accept' Diffm Homv Broad (relative to Diffm Hetv Broad) with a posterior probability of at least 0.95, Diffm Homv Broad's prior probability must be at least 1. To 'reject' Diffm Homv Broad (relative to Diffm Hetv Broad) with a posterior probability less than 0.05, Diffm Homv Broad's prior probability must be less than 1.
+
+```{r}
+#' @title bfplot
+#' @description For an input Bayes factor, `bfplot()` creates a plot of the
+#'   posterior model probability as a function of the prior model probability.
+#' @details For an input Bayes factor, `bfplot()` plots the posterior
+#'   probability of the numerator model as a function of the prior probability
+#'   of the numerator model. The plot is annotated with the critical posterior
+#'   probability for deciding to accept or reject the models, and with the
+#'   corresponding prior probability required to reach that threshold. The
+#'   function returns a list including a text message summarizing the results.
+#' @param bf The Bayes factor to be plotted; a scalar greater than zero. User
+#'   must specify.
+#' @param numerName Name of numerator model; character string in quotes. Has default.
+#' @param denomName Name of denominator model; character string in quotes. Has default.
+#' @param critPost Critical value for posterior probability of numerator model
+#'   to 'accept' the numerator model. Defaults to 0.95. Must be numeric > 0.50,
+#'   or NA in which case no accept/reject annotation is displayed or returned.
+#' @param main Title annotation for plot. Has default.
+#' @param bfCol Color of Bayes factor annotation. Has default.
+#' @param acceptCol Color of 'accept' annotation. Has default.
+#' @param rejectCol Color of 'reject' annotation. Has default.
+#' @param bfLabelNudge Displacement of BF label relative to curve. Has default.
+#' @param bfLabelCex Magnification of BF label text. Has default.
+#' @param noPlot If TRUE then only returns info, no plot. Defaults to FALSE.
+#' @return A list containing the input values and various computed values along
+#'   with a text message (character string) explaining critical prior
+#'   probabilities of models.
+#' @examples
+#' # Example with bf>1, lean toward 'accept' numerator model:
+#' bfplot( bf = 19 )
+#' # Example with bf<1, lean toward 'reject' numerator model:
+#' bfplot( bf = 1/19 )
+#' # Example with different critical posterior probability for decision:
+#' bfplot( bf = 3 , critPost = 0.75 )
+#' # Example with returned output:
+#' bfplotInfo = bfplot( bf = 19 )
+#' print( bfplotInfo )
+#' # Example for disease diagnosis:
+#' falsePositiveRate = 0.07 ; specificity = 1.0-falsePositiveRate
+#' falseNegativeRate = 0.03 ; sensitivity = 1.0-falseNegativeRate
+#' bfPositiveTest = sensitivity / falsePositiveRate # for positive test result
+#' bfNegativeTest = falseNegativeRate / specificity # for negative test result
+#' par(mfrow=c(1,2))
+#' bfplot( bfPositiveTest ,
+#'         numerName="Have Disease" , denomName="Don't Have Dis." ,
+#'         main="Test Positive" , critPost=NA )
+#' bfplot( bfNegativeTest ,
+#'         numerName="Have Disease" , denomName="Don't Have Dis." ,
+#'         main="Test Negative" , critPost=NA )
+#' par(mfrow=c(1,1)) # reset single plot panel
+#' @author John K. Kruschke, johnkruschke@gmail.com,
+#'   https://jkkweb.sitehost.iu.edu/, December 2020.
+#' @export
+bfplot <- function(
+  bf,
+  numerName = "Numerator Model",
+  denomName = "Denominator Model",
+  critPost = 0.95,
+  main = NULL,
+  bfCol = COLORS[1],
+  acceptCol = COLORS[2],
+  rejectCol = "darkred",
+  bfLabelNudge = 0.02,
+  noPlot = FALSE,
+  ...
+) {
+  # Load required packages
+  if (!requireNamespace("ggplot2", quietly = TRUE))
+    stop("Please install 'ggplot2' with install.packages('ggplot2')")
+  if (!requireNamespace("latex2exp", quietly = TRUE))
+    stop("Please install 'latex2exp' with install.packages('latex2exp')")
+
+  # Validate inputs
+  if (bf <= 0) stop("bf must be greater than zero")
+  if (!is.na(critPost)) {
+    if (critPost <= 0.5) stop("critPost must be greater than 0.5")
+    if (critPost > 1) stop("critPost must not exceed 1")
+  }
+
+  # Compute prior/posterior curve
+  prior <- seq(1e-100, 1 - 1e-100, length = 501)
+  priorOdds <- prior / (1 - prior)
+  postOdds <- as.numeric(bf) * priorOdds
+  post <- postOdds / (1 + postOdds)
+  idx <- which(is.finite(post))
+  prior <- c(0, prior[idx], 1)
+  post <- c(0, post[idx], 1)
+  df <- data.frame(prior, post)
+  limMarg <- 0.05
+
+  # Compute critical intervals
+  if (!is.na(critPost)) {
+    hiCritPost <- critPost
+    hiCritPostOdds <- hiCritPost / (1 - hiCritPost)
+    hiCritPrior <- hiCritPostOdds / (bf + hiCritPostOdds)
+
+    loCritPost <- 1 - critPost
+    loCritPostOdds <- loCritPost / (1 - loCritPost)
+    loCritPrior <- loCritPostOdds / (bf + loCritPostOdds)
+  } else {
+    hiCritPost <- loCritPost <- hiCritPrior <- loCritPrior <- NULL
+  }
+
+  # Skip plotting if requested
+  if (noPlot) {
+    return(invisible(list(
+      bf = bf,
+      numerName = numerName,
+      denomName = denomName,
+      critPost = critPost,
+      hiCritPost = hiCritPost,
+      hiCritPrior = hiCritPrior,
+      loCritPost = loCritPost,
+      loCritPrior = loCritPrior
+    )))
+  }
+
+  # Define LaTeX-rendered title
+  title_text <- if (is.null(main)) {
+    latex2exp::TeX(paste0("$", numerName, " / ", denomName, "$"))
+  } else latex2exp::TeX(main)
+
+  # Base plot (removed 45° line)
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = prior, y = post)) +
+    ggplot2::geom_line(linewidth = 1.2, color = bfCol) +
+    ggplot2::coord_cartesian(xlim = c(0 - limMarg, 1 + limMarg),
+                             ylim = c(0 - limMarg, 1 + limMarg)) +
+    ggplot2::labs(
+      x = latex2exp::TeX(paste0("Prior Probability of ", numerName)),
+      y = latex2exp::TeX(paste0("Posterior Probability of ", numerName)),
+      title = title_text
+    ) +
+    ggplot2::theme_minimal(base_size = 14) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"),
+      panel.grid.minor = ggplot2::element_blank()
+    )
+
+  # Add Bayes factor annotation
+  bf_idx <- if (bf > 1) which.max(post - prior) else which.min(post - prior)
+  p <- p +
+    ggplot2::annotate(
+      "text",
+      x = df$prior[bf_idx],
+      y = df$post[bf_idx],
+      label = paste0("BF = ", signif(bf, 3)),
+      hjust = ifelse(bf > 1, -bfLabelNudge, 1 + bfLabelNudge),
+      vjust = ifelse(bf > 1, -0.2, 1.2),
+      size = 5,
+      color = bfCol
+    )
+
+  # Add accept/reject regions & labels
+  if (!is.na(critPost)) {
+    # Accept line & text
+    p <- p +
+      ggplot2::annotate("segment", x = 0, xend = 1,
+                        y = hiCritPost, yend = hiCritPost,
+                        color = acceptCol, linetype = "dashed") +
+      ggplot2::annotate("segment", x = hiCritPrior, xend = 1,
+                        y = hiCritPost, yend = hiCritPost,
+                        color = acceptCol, linewidth = 1.2) +
+      ggplot2::annotate("text", x = hiCritPrior, y = hiCritPost,
+                        label = round(hiCritPrior, 3),
+                        color = acceptCol, vjust = -0.5, size = 4) +
+      ggplot2::annotate("text", x = 1, y = hiCritPost,
+                        label = paste0("Prior s.t. Post >", round(hiCritPost, 3)),
+                        color = acceptCol, hjust = 1, vjust = 1.5, size = 4)
+
+    # Reject dashed line only (removed the solid red bar)
+    p <- p +
+      ggplot2::annotate("segment", x = 0, xend = 1,
+                        y = loCritPost, yend = loCritPost,
+                        color = rejectCol, linetype = "dashed") +
+      ggplot2::annotate("text", x = loCritPrior, y = loCritPost,
+                        label = round(loCritPrior, 3),
+                        color = rejectCol, vjust = 1.5, size = 4) +
+      ggplot2::annotate("text", x = 0, y = loCritPost,
+                        label = paste0("Prior s.t. Post <", round(loCritPost, 3)),
+                        color = rejectCol, hjust = 0, vjust = -0.5, size = 4)
+  }
+
+  print(p)
+
+  invisible(list(
+    bf = bf,
+    numerName = numerName,
+    denomName = denomName,
+    critPost = critPost,
+    hiCritPost = hiCritPost,
+    hiCritPrior = hiCritPrior,
+    loCritPost = loCritPost,
+    loCritPrior = loCritPrior
+  ))
+}
+```
+
+## Calculate Bayes Factor
+
+```{r}
+calculate_bayes_factor <- function(model_A, model_B) {
+  if (!requireNamespace("bridgesampling", quietly = TRUE)) {
+    stop("Please install the 'bridgesampling' package.")
+  }
+
+  suppress_iter_output <- function(expr) {
+    # Suppress printed output (like Iteration: ...)
+    # but allow warnings to still show
+    tmp <- tempfile()
+    sink(tmp)
+    on.exit({
+      sink()
+      unlink(tmp)
+    })
+    result <- withCallingHandlers(expr, warning = function(w) {
+      # Print warning messages normally
+      warning(conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+    return(result)
+  }
+
+  bridge_A <- suppress_iter_output(bridgesampling::bridge_sampler(model_A, silent = TRUE, maxiter = 2000))
+  bridge_B <- suppress_iter_output(bridgesampling::bridge_sampler(model_B, silent = TRUE, maxiter = 2000))
+
+  BF_AB <- bridgesampling::bf(bridge_A, bridge_B)$bf
+
+  formatted_BF <- if (BF_AB < 0.001 || BF_AB > 100) {
+    formatC(BF_AB, format = "e", digits = 1)
+  } else if (BF_AB < 1) {
+    formatC(BF_AB, format = "f", digits = 3)
+  } else {
+    round(BF_AB, 0)
+  }
+
+  return(as.numeric(formatted_BF))
+}
+```
+
+## Load all brms Models
+
+```{r}
+load_all_brms_models <- function(folder = "models") {
+  # Ensure folder exists
+  if (!dir.exists(folder)) {
+    stop(paste("Folder not found:", folder))
+  }
+  
+  # List all .rds model files
+  model_files <- list.files(folder, pattern = "\\.rds$", full.names = TRUE)
+  
+  if (length(model_files) == 0) {
+    stop("No .rds model files found in the specified folder.")
+  }
+
+  models <- list()
+
+  for (f in model_files) {
+    model_name <- sub("\\.rds$", "", basename(f))
+    model_path <- sub("\\.rds$", "", f)  # brm() expects path without extension
+
+    # Try to load model, catch error if not a brms model
+    loaded_model <- tryCatch(
+      {
+        brm(file = model_path)
+      },
+      error = function(e) {
+        message(sprintf("Skipping '%s': %s", f, e$message))
+        NULL
+      }
+    )
+
+    if (!is.null(loaded_model)) {
+      models[[model_name]] <- loaded_model
+    }
+  }
+
+  if (length(models) == 0) {
+    warning("No valid brms models were loaded.")
+  }
+
+  return(models)
+}
+```
+
+## Check Convergence
+
+```{r}
+# R hat is smaller than 1.1
+# ESS is larger than 3000
+
+check_convergence <- function(model) {
+  summ <- summary(model)
+
+  # Combine fixed and random Rhat & ESS
+  rhat_vals <- c(summ$fixed$Rhat, summ$random$Rhat)
+  # If there's more than one fixed effect (i.e., not just intercept)
+  if (nrow(summ$fixed) > 1) {
+    ess_vals <- c(summ$fixed$Bulk_ESS[2:nrow(summ$fixed)], summ$random$Bulk_ESS)
+  } else {
+    # Only intercept, so just use random effects (or nothing if those are also missing)
+    ess_vals <- c(summ$fixed$Bulk_ESS, summ$random$Bulk_ESS)
+  }
+  
+  # message(deparse(substitute(model))," ESS: ",ess_vals)
+  # message(deparse(substitute(model))," R_hat: ", rhat_vals)
+
+  # Proper assignment and robust checks
+  rhat_ok <- all(rhat_vals < 1.1, na.rm = TRUE)
+  ess_ok  <- all(ess_vals > 3000, na.rm = TRUE)
+  all_ok  <- rhat_ok && ess_ok
+
+  return(all_ok)
+}
+
+```
+
+## Model Comparison
+
+We pre-registered both intercept-only random-effects models and intercept-plus-random-slope models for each Bayesian regression. When the more complex model achieved satisfactory convergence ($\hat{R} \approx 1$, $ESS > 4{,}000$), we conducted model selection based on the Bayes factor (BF). Specifically, placing the intercept-plus-slope model in the numerator, the more complex model was preferred if $BF > 3$; otherwise, the simpler intercept-only model was selected.
+
+```{r}
+compare_models <- function(models) {
+  if (!requireNamespace("bridgesampling", quietly = TRUE)) {
+    stop("Please install the 'bridgesampling' package.")
+  }
+
+  # Use names directly because list is named!
+  model_names <- names(models)
+  base_names <- unique(gsub("_rs$", "", model_names))
+  selected_models <- list()
+
+  for (base in base_names) {
+    int_name <- base
+    slope_name <- paste0(base, "_rs")
+    
+    model_int <- models[[int_name]]
+    if (is.null(model_int)) {
+      warning("Missing intercept model for ", base)
+      next
+    }
+
+    conv_int <- check_convergence(model_int)
+    
+    if (!slope_name %in% model_names) {
+        # No slope model → use intercept
+        selected_models[[base]] <- model_int
+      if (conv_int){
+        message("Selected: ", int_name, " (no slope model found)")        
+      }else {
+        warning("Neither model converged for ", base, ", Intercept model selected")
+      }
+      next
+    }
+    
+    model_slope <- models[[slope_name]]
+    conv_slope <- check_convergence(model_slope)
+
+    if (conv_slope) {
+      bf <- calculate_bayes_factor(model_slope, model_int)
+      if (bf > 3) {
+        selected_models[[slope_name]] <- model_slope
+        message("Selected: ", slope_name, " (BF = ", bf, ")")
+      } else {
+        selected_models[[base]] <- model_int
+        message("Selected: ", int_name, " (BF = ", bf, ")")
+      }
+    } else {
+      if (conv_int) {
+        selected_models[[base]] <- model_int
+        message("Selected: ", int_name, " (slope model failed convergence)")
+      } else {
+        warning("Neither model converged for ", base)
+      }
+    }
+  }
+
+  return(selected_models)
+}
+```
+
+## Table Creation
+
+```{r}
+make_kable_ci_stars <- function(models,
+                                slopeOrNotLis,          # model with random slope or not e.g.list("NO", "NO")
+                                name_map      = NULL,   # named vector: original -> LaTeX label
+                                conf.level    = 0.95,
+                                digits        = 3,
+                                model_names   = NULL,   # e.g., c("$M_1$","$M_2$")
+                                group_labels  = NULL,   # e.g., c("$RT_{HSI}$","$RT_{FF}$")
+                                group_counts  = NULL,   # e.g., c(1,1) sum==length(models)
+                                file          = NULL) { # e.g., "models_ci_stars.tex"
+
+  stopifnot(length(models) >= 1)
+  if (is.null(model_names)) model_names <- paste0("$(", seq_along(models),")$")
+
+  ## ---- helpers: robust GOF ----
+  safe_nobs <- function(m) {
+    n <- suppressWarnings(tryCatch(insight::nobs(m), error = function(e) NA_integer_))
+    if (is.na(n) || !is.finite(n) || n <= 0)
+      n <- suppressWarnings(tryCatch(nrow(insight::get_data(m, effects = "fixed", verbose = FALSE)),
+                                     error = function(e) NA_integer_))
+    if (is.na(n) || !is.finite(n) || n <= 0)
+      n <- suppressWarnings(tryCatch(ncol(brms::log_lik(m)), error = function(e) NA_integer_))
+    n
+  }
+  safe_bayes_r2 <- function(m) tryCatch({
+    d <- as.numeric(brms::bayes_R2(m, summary = FALSE))
+    if (length(d) == 0 || anyNA(d)) as.numeric(brms::bayes_R2(m, summary = TRUE)[,"Estimate"]) else mean(d)
+  }, error = function(e) NA_real_)
+  safe_ll <- function(m) tryCatch({
+    ll <- brms::log_lik(m); sum(colMeans(ll))
+  }, error = function(e) NA_real_)
+
+  ## ---- extract fixed effects with CrI ----
+  probs <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+  one_model_tbl <- function(m) {
+    s <- as.data.frame(brms::posterior_summary(m, probs = probs))
+    tibble(term = rownames(s),
+           estimate = s[,"Estimate"],
+           low      = s[,3],
+           high     = s[,4]) |>
+      filter(grepl("^b_", term)) |>
+      mutate(term = sub("^b_", "", term))
+  }
+
+  tlist     <- lapply(models, one_model_tbl)
+  all_terms <- unique(unlist(lapply(tlist, `[[`, "term")))
+
+  ## order by name_map if supplied
+  if (!is.null(name_map)) {
+    nm_keys   <- sub("^b_", "", names(name_map))
+    all_terms <- unique(c(nm_keys[nm_keys %in% all_terms], setdiff(all_terms, nm_keys)))
+  }
+
+  ## LaTeX row labels
+  map_label <- function(x) {
+    if (is.null(name_map)) return(x)
+    nm <- setNames(name_map, sub("^b_", "", names(name_map)))
+    ifelse(x %in% names(nm), unname(nm[x]), x)
+  }
+  row_labels <- map_label(all_terms)
+
+  ## ---- build character columns: "β* [l, u]" ----
+  mkcol <- function(df) {
+    df2  <- tibble(term = all_terms) |> left_join(df, by = "term")
+    sig  <- with(df2, !is.na(low) & !is.na(high) & (low * high > 0))
+    star <- ifelse(sig, "$^{\\ast}$", "")
+    # second line for credible interval
+    cell <- sprintf("\\makecell{%.3f%s \\\\ \\footnotesize{[%.3f, %.3f]}}",
+                df2$estimate, 
+                "", #star, ############ COMMENTED OUT SINCE I DON'T NEED STARS. Used an empty placeholder now
+                df2$low, 
+                df2$high)
+    cell[is.na(df2$estimate)] <- ""
+    cell
+  }
+  cols <- lapply(tlist, mkcol)
+
+  ## ---- assemble main table ----
+  tab <- tibble(Term = row_labels)
+  for (j in seq_along(models)) tab[[model_names[j]]] <- cols[[j]]
+
+  ## ---- append GOF rows ----
+  Ns  <- vapply(models, safe_nobs,     integer(1))
+  R2s <- vapply(models, safe_bayes_r2, numeric(1))
+  LLs <- vapply(models, safe_ll,       numeric(1))
+
+  f0 <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = 0))
+  fD <- function(x) ifelse(is.na(x), "", formatC(x, format = "f", digits = digits))
+
+  tab <- bind_rows(
+    tab,
+    tibble(Term = "\\midrule $N$",                     !!!setNames(as.list(f0(Ns)),  model_names)),
+    tibble(Term = "$R^2_{\\text{Bayes}}$",   !!!setNames(as.list(fD(R2s)), model_names)),
+    tibble(Term = "$\\mathrm{LL}$",          !!!setNames(as.list(fD(LLs)), model_names)),
+    tibble(Term = "$\\mathrm{rs}$",           !!!setNames(slopeOrNotLis, model_names))
+  )
+
+  ## ---- render with kable + kableExtra (booktabs, math preserved) ----
+  names(tab)[1] <- ""  # Remove "Term" column header
+  kbl <- knitr::kable(
+    tab,
+    format   = "latex",
+    booktabs = TRUE,
+    escape   = FALSE,
+    align    = c("l", rep("c", ncol(tab)-1))
+  )
+
+  ## optional grouped headers across model columns
+  if (!is.null(group_labels) && !is.null(group_counts)) {
+    stopifnot(length(group_labels) == length(group_counts),
+              sum(group_counts) == length(models))
+    # add a blank span for the "Term" column
+    header_vec <- c(" " = 1, stats::setNames(as.list(group_counts), group_labels))
+    kbl <- kbl |> kableExtra::add_header_above(header_vec, escape = FALSE)
+  }
+
+  ## write to file if requested
+  if (!is.null(file)) writeLines(as.character(kbl), con = file)
+  kbl <- paste0("\\begingroup\n\\onehalfspacing\n", 
+              as.character(kbl), 
+              "\n\\endgroup")
+  return(kbl)  # knitr_kable object; use as.character(kbl) for raw LaTeX
+}
+
+```
+
+# Bayesian Regressions
+
+## R1 & R2 - H1B
+
+H1-B: In the state updating question, decision quality does not decrease as the number of potential signals (number of possible colors) in an instance increase, since more potential signals does not increase computational complexity.
+
+```{r}
+### Random Intercept Only
+r1_diffuse <- run_beta_regression(DQ_U_o ~ urns_trans + colours_trans + seqBall_trans + (1 | participantID), makePrior(), "r1_diffuse")
+
+r2_diffuse <- run_beta_regression(DQ_U_o ~ urns_trans + seqBall_trans + (1 | participantID), makePrior(), "r2_diffuse")
+
+BF_21 <- calculate_bayes_factor(r2_diffuse, r1_diffuse)
+```
+
+```{r}
+print(summary(r1_diffuse))
+posteriorPredictiveCheck_gg(r1_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r1_diffuse, width = 4, height = 4)
+
+print(summary(r2_diffuse))
+posteriorPredictiveCheck_gg(r2_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r2_diffuse, width = 4, height = 3)
+
+print(paste0("BF is ", BF_21))
+if (BF_21[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H1-B")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H1-B")
+}
+
+bfplot(BF_21, "w/o Potential Signals", "w Potential Signals")
+```
+
+```{r}
+### Random Slope + Intercept 
+
+r1_diffuse_rs <- run_beta_regression( DQ_U_o ~ urns_trans + colours_trans + seqBall_trans + (1 + urns_trans + colours_trans + seqBall_trans | participantID), makePrior(randomSlope = T), "r1_diffuse_rs")
+
+r2_diffuse_rs <- run_beta_regression(DQ_U_o ~ urns_trans + seqBall_trans + (1 + urns_trans + seqBall_trans | participantID), makePrior(randomSlope = T), "r2_diffuse_rs")
+
+BF_21_rs <- calculate_bayes_factor(r2_diffuse_rs, r1_diffuse_rs)
+```
+
+```{r}
+print(summary(r1_diffuse_rs))
+posteriorPredictiveCheck_gg(r1_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r1_diffuse_rs, width = 4, height = 4)
+
+print(summary(r2_diffuse_rs))
+posteriorPredictiveCheck_gg(r2_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r2_diffuse_rs, width = 4, height = 3)
+
+print(paste0("BF is ", BF_21_rs))
+
+if (BF_21_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H1-B")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H1-B")
+}
+```
+
+## R3 & R4 - H2C
+
+H2-C: In state updating task, step-wise decision quality for the third ball draw is no lower than for the second ball draw, as the belief updating process of the third and second draws have the same computational complexity.
+
+```{r}
+### Random Intercept Only
+r3_diffuse <- run_beta_regression(DQ_U_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID), makePrior(), "r3_diffuse")
+
+r4_diffuse <- run_beta_regression(DQ_U_s ~ DV_seqBall_1 + (1 | participantID), makePrior(), "r4_diffuse")
+
+BF_43 <- calculate_bayes_factor(r4_diffuse, r3_diffuse)
+```
+
+```{r}
+print(summary(r3_diffuse))
+posteriorPredictiveCheck_gg(r3_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r3_diffuse, width = 4, height = 3)
+
+print(summary(r4_diffuse))
+posteriorPredictiveCheck_gg(r4_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r4_diffuse, width = 4, height = 2)
+
+print(paste0("BF is ", BF_43))
+if (BF_43[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2-C")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2-C")
+}
+```
+
+```{r}
+### Random Slope + Intercept 
+
+r3_diffuse_rs <- run_beta_regression(DQ_U_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 + DV_seqBall_1 + DV_seqBall_3 | participantID), makePrior(randomSlope = T), "r3_diffuse_rs")
+
+r4_diffuse_rs <- run_beta_regression(DQ_U_s ~ DV_seqBall_1 + (1 + DV_seqBall_1 | participantID), makePrior(randomSlope = T), "r4_diffuse_rs")
+
+BF_43_rs <- calculate_bayes_factor(r4_diffuse_rs, r3_diffuse_rs)
+```
+
+```{r}
+print(summary(r3_diffuse_rs))
+posteriorPredictiveCheck_gg(r3_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r3_diffuse_rs, width = 4, height = 3)
+
+print(summary(r4_diffuse_rs))
+posteriorPredictiveCheck_gg(r4_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r4_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_43_rs))
+if (BF_43_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H2-C")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H2-C")
+}
+```
+
+## R5 & R6 - H4A
+
+H4-A: In signal prediction task, the step-wise decision quality for the third ball draw is no lower than for the second ball draw and the first ball draw, as the belief updating process of the third draw has the same computational complexity with for the second draw and the first ball draw.
+
+```{r}
+### Random Intercept Only
+r5_diffuse <- run_beta_regression(DQ_C_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 | participantID), makePrior(), "r5_diffuse")
+
+r6_diffuse <- run_beta_regression(DQ_C_s ~  (1 | participantID), makePrior(interceptOnly = T), "r6_diffuse")
+
+BF_65 <- calculate_bayes_factor(r6_diffuse, r5_diffuse)
+```
+
+```{r}
+print(summary(r5_diffuse))
+posteriorPredictiveCheck_gg(r5_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r5_diffuse, width = 4, height = 3)
+
+print(summary(r6_diffuse))
+posteriorPredictiveCheck_gg(r6_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_65))
+if (BF_65[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H4-A")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H4-A")
+}
+```
+
+```{r}
+### Random Intercept and Slope 
+r5_diffuse_rs <- run_beta_regression(DQ_C_s ~ DV_seqBall_1 + DV_seqBall_3 + (1 + DV_seqBall_1 + DV_seqBall_3| participantID), makePrior(randomSlope = T), "r5_diffuse_rs")
+
+# Note r6_diffuse_rs is the same with r6_diffuse
+BF_65_rs <- calculate_bayes_factor(r6_diffuse, r5_diffuse_rs)
+```
+
+```{r}
+print(summary(r5_diffuse_rs))
+posteriorPredictiveCheck_gg(r5_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r5_diffuse_rs, width = 4, height = 3)
+
+
+if (BF_65_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H4-A")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H4-A")
+}
+```
+
+## R7 & R7c - H1
+
+H1: In the question regarding the hidden state of the world (the state updating task), decision quality is predicted to be negatively correlated with computational complexity.
+
+```{r}
+### Random Intercept Only
+r7_diffuse <- run_beta_regression(DQ_U_o ~ ACC_u + (1 | participantID), makePrior(), "r7_diffuse")
+
+r7c_diffuse <- run_beta_regression(DQ_U_o ~  (1 | participantID), makePrior(interceptOnly = T), "r7c_diffuse")
+
+BF_77c <- calculate_bayes_factor(r7_diffuse, r7c_diffuse)
+```
+
+```{r}
+print(summary(r7_diffuse))
+posteriorPredictiveCheck_gg(r7_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r7_diffuse, width = 4, height = 3)
+
+print(summary(r7c_diffuse))
+posteriorPredictiveCheck_gg(r7c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_77c))
+if (BF_77c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H1")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H1")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r7_diffuse_rs <- run_beta_regression(DQ_U_o ~ ACC_u + (1 + ACC_u| participantID), makePrior(randomSlope = T), "r7_diffuse_rs")
+
+# Note r7c_diffuse and r7c_diffuse_rs are the same
+BF_77c_rs <- calculate_bayes_factor(r7_diffuse_rs, r7c_diffuse)
+```
+
+```{r}
+print(summary(r7_diffuse_rs))
+posteriorPredictiveCheck_gg(r7_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r7_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_77c_rs))
+if (BF_77c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H1")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H1")
+}
+```
+
+## R8 & R8c - H3
+
+H3: In signal prediction task (when participants are asked to predict the color of the next ball extracted), the overall decision quality is negatively correlated with computational complexity.
+
+```{r}
+### Random Intercept Only
+r8_diffuse <- run_beta_regression(DQ_C_o ~ ACC_c + (1 | participantID), makePrior(), "r8_diffuse")
+
+r8c_diffuse <- run_beta_regression(DQ_C_o ~ (1 | participantID), makePrior(interceptOnly = T), "r8c_diffuse")
+
+BF_88c <- calculate_bayes_factor(r8_diffuse, r8c_diffuse)
+```
+
+```{r}
+print(summary(r8_diffuse))
+posteriorPredictiveCheck_gg(r8_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r8_diffuse, width = 4, height = 3)
+
+print(summary(r8c_diffuse))
+posteriorPredictiveCheck_gg(r8c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_88c))
+if (BF_88c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r8_diffuse_rs <- run_beta_regression(DQ_C_o ~ ACC_c + (1 + ACC_c | participantID), makePrior(randomSlope = T), "r8_diffuse_rs")
+
+#Note: r8c_diffuse_rs is the same with r8c_diffuse
+
+BF_88c_rs <- calculate_bayes_factor(r8_diffuse_rs, r8c_diffuse)
+```
+
+```{r}
+print(summary(r8_diffuse_rs))
+posteriorPredictiveCheck_gg(r8_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r8_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_88c_rs))
+if (BF_88c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+## R9 & R9c - H2
+
+H2: In state updating task, step-wise decision quality (decision quality taking into account participants previous answers as priors of the next updating) is negatively correlated with step-wise computational complexity.
+
+```{r}
+### Random Intercept Only
+r9_diffuse <- run_beta_regression(DQ_U_s ~ CC_u + (1 | participantID), makePrior(),"r9_diffuse")
+
+r9c_diffuse <- run_beta_regression(DQ_U_s ~ (1 | participantID), makePrior(interceptOnly = T),"r9c_diffuse")
+
+BF_99c <- calculate_bayes_factor(r9_diffuse, r9c_diffuse)
+```
+
+```{r}
+print(summary(r9_diffuse))
+posteriorPredictiveCheck_gg(r9_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r9_diffuse, width = 4, height = 3)
+
+print(summary(r9c_diffuse))
+posteriorPredictiveCheck_gg(r9c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_99c))
+if (BF_99c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r9_diffuse_rs <- run_beta_regression(DQ_U_s ~ CC_u + (1 + CC_u | participantID), makePrior(randomSlope = T),"r9_diffuse_rs")
+
+#Note: r9c_diffuse_rs is the same with r9c_diffuse
+
+BF_99c_rs <- calculate_bayes_factor(r9_diffuse_rs, r9c_diffuse)
+```
+
+```{r}
+print(summary(r9_rs_diffuse))
+posteriorPredictiveCheck_gg(r9_rs_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r9_rs_diffuse, width = 4, height = 3)
+
+print(paste0("BF is ", BF_99c_rs))
+if (BF_99c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+## R10 & R10c - H4
+
+H4: In signal prediction task, step-wise decision quality (decision quality taking into account participants previous answers as priors of the next updating) is negatively correlated with step-wise computational complexity.
+
+```{r}
+### Random Intercept Only
+print(makePrior())
+r10_diffuse <- run_beta_regression(DQ_C_s ~ CC_c + (1 | participantID), makePrior(), "r10_diffuse") 
+
+r10c_diffuse <- run_beta_regression(DQ_C_s ~ (1 | participantID), makePrior(interceptOnly = T), "r10c_diffuse")
+
+BF_1010c <- calculate_bayes_factor(r10_diffuse, r10c_diffuse)
+```
+
+```{r}
+print(summary(r10_diffuse))
+posteriorPredictiveCheck_gg(r10_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r10_diffuse, width = 4, height = 3)
+
+print(summary(r10c_diffuse))
+posteriorPredictiveCheck_gg(r10c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_1010c))
+if (BF_1010c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H4")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H4")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r10_diffuse_rs <- run_beta_regression(DQ_C_s ~ CC_c + (1 + CC_c| participantID), makePrior(randomSlope = T), "r10_diffuse_rs")
+
+#Note: r10c_diffuse_rs is the same with r10c_diffuse
+
+BF_1010c_rs <- calculate_bayes_factor(r10_diffuse_rs, r10c_diffuse)
+```
+
+```{r}
+print(summary(r10_rs_diffuse))
+posteriorPredictiveCheck_gg(r10_rs_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r10_rs_diffuse, width = 4, height = 3)
+
+print(paste0("BF is ", BF_1010c_rs))
+if (BF_1010c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H3")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H3")
+}
+```
+
+## R11 & R11c - H1A
+
+H1-A: In the state updating task, decision quality decreases as the number of states in an instance increases, since more states leads to higher computational complexity.
+
+```{r}
+### Random Intercept Only
+r11_diffuse <- run_beta_regression(DQ_U_o ~ urns_trans + colours_trans + seqBall_trans  + (1 | participantID), makePrior(), "r11_diffuse")
+
+r11c_diffuse <- run_beta_regression(DQ_U_o ~ colours_trans + seqBall_trans  + (1 | participantID), makePrior(), "r11c_diffuse")
+
+BF_1111c <- calculate_bayes_factor(r11_diffuse, r11c_diffuse)
+```
+
+```{r}
+print(summary(r11_diffuse))
+posteriorPredictiveCheck_gg(r11_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r11_diffuse, width = 4, height = 4)
+
+print(summary(r11c_diffuse))
+posteriorPredictiveCheck_gg(r11c_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r11c_diffuse, width = 4, height = 3)
+
+print(paste0("BF is ", BF_1111c))
+if (BF_1111c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H1A")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H1A")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r11_diffuse_rs <- run_beta_regression(DQ_U_o ~ urns_trans + colours_trans + seqBall_trans  + (1 +  urns_trans + colours_trans + seqBall_trans| participantID), makePrior(randomSlope = T), "r11_diffuse_rs")
+
+r11c_diffuse_rs <- run_beta_regression(DQ_U_o ~ colours_trans + seqBall_trans  + (1 + colours_trans + seqBall_trans| participantID), makePrior(randomSlope = T), "r11c_diffuse_rs")
+
+BF_1111c_rs <- calculate_bayes_factor(r11_diffuse_rs, r11c_diffuse_rs)
+```
+
+```{r}
+print(summary(r11_diffuse_rs))
+posteriorPredictiveCheck_gg(r11_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r11_diffuse_rs, width = 4, height = 4)
+
+print(summary(r11c_diffuse_rs))
+posteriorPredictiveCheck_gg(r11c_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r11c_diffuse_rs, width = 4, height = 3)
+
+print(paste0("BF is ", BF_1111c_rs))
+if (BF_1111c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H1A")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H1A")
+}
+```
+
+## R12 & R12c1 & R12c2 - H2A & H2B
+
+H2-A: In state updating task, step-wise decision quality for the second ball draw is lower than for the first ball draw, as the belief updating process of the second draw has higher computational complexity than the first.
+
+H2-B: In state updating task, step-wise decision quality for the third ball draw is lower than for the first ball draw, as the belief updating process of the third draw has higher computational complexity than for the first.
+
+```{r}
+### Random Intercept Only
+r12_diffuse <- run_beta_regression(DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 | participantID), makePrior(), "r12_diffuse")
+
+r12c1_diffuse <- run_beta_regression(DQ_U_s ~  DV_seqBall_3 + (1 | participantID), makePrior(), "r12c1_diffuse")
+
+r12c2_diffuse <- run_beta_regression(DQ_U_s ~  DV_seqBall_2 + (1 | participantID), makePrior(), "r12c2_diffuse")
+
+BF_1212c1 <- calculate_bayes_factor(r12_diffuse, r12c1_diffuse)
+BF_1212c2 <- calculate_bayes_factor(r12_diffuse, r12c2_diffuse)
+```
+
+```{r}
+print(summary(r12_diffuse))
+posteriorPredictiveCheck_gg(r12_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12_diffuse, width = 4, height = 3)
+
+print(summary(r12c1_diffuse))
+posteriorPredictiveCheck_gg(r12c1_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12c1_diffuse, width = 4, height = 2)
+
+print(summary(r12c2_diffuse))
+posteriorPredictiveCheck_gg(r12c2_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12c2_diffuse, width = 4, height = 2)
+
+print(paste0("BF is ", BF_1212c1))
+if (BF_1212c1[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2A")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2A")
+}
+
+print(paste0("BF is ", BF_1212c2))
+if (BF_1212c2[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H2B")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H2B")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r12_diffuse_rs <- run_beta_regression(DQ_U_s ~ DV_seqBall_2 + DV_seqBall_3 + (1 + DV_seqBall_2 + DV_seqBall_3 | participantID), makePrior(randomSlope = T), "r12_diffuse_rs")
+
+r12c1_diffuse_rs <- run_beta_regression(DQ_U_s ~  DV_seqBall_3 + (1 + DV_seqBall_3| participantID), makePrior(randomSlope = T), "r12c1_diffuse_rs")
+
+r12c2_diffuse_rs <- run_beta_regression(DQ_U_s ~  DV_seqBall_2 + (1 + DV_seqBall_2| participantID), makePrior(randomSlope = T), "r12c2_diffuse_rs")
+
+BF_1212c1_rs <- calculate_bayes_factor(r12_diffuse_rs, r12c1_diffuse_rs)
+BF_1212c2_rs <- calculate_bayes_factor(r12_diffuse_rs, r12c2_diffuse_rs)
+```
+
+```{r}
+print(summary(r12_diffuse_rs))
+posteriorPredictiveCheck_gg(r12_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12_diffuse_rs, width = 4, height = 3)
+
+print(summary(r12c1_diffuse_rs))
+posteriorPredictiveCheck_gg(r12c1_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12c1_diffuse_rs, width = 4, height = 2)
+
+print(summary(r12c2_diffuse_rs))
+posteriorPredictiveCheck_gg(r12c2_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r12c2_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_1212c1_rs))
+if (BF_1212c1_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H2A")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H2A")
+}
+
+print(paste0("BF is ", BF_1212c2_rs))
+if (BF_1212c2_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H2B")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H2B")
+}
+```
+
+## R13 & R13c1 & R13c2- H3A & H3B
+
+H3-A: In signal prediction task, decision quality decreases as the number of states in an instance increases, since more states leads to higher computational complexity.
+
+H3-B: In signal prediction task, decision quality decreases as the number of potential signals in an instance increases, since more potential signals leads to higher computational complexity
+
+```{r}
+### Random Intercept Only
+r13_diffuse <- run_beta_regression(DQ_C_o ~ urns_trans + colours_trans + seqBall_trans + (1 | participantID), makePrior(), "r13_diffuse")
+
+r13c1_diffuse <- run_beta_regression(DQ_C_o ~ colours_trans + seqBall_trans + (1 | participantID), makePrior(), "r13c1_diffuse")
+
+r13c2_diffuse <- run_beta_regression(DQ_C_o ~ urns_trans + seqBall_trans + (1 | participantID), makePrior(), "r13c2_diffuse")
+
+BF_1313c1 <- calculate_bayes_factor(r13_diffuse, r13c1_diffuse)
+BF_1313c2 <- calculate_bayes_factor(r13_diffuse, r13c2_diffuse)
+```
+
+```{r}
+print(summary(r13_diffuse))
+posteriorPredictiveCheck_gg(r13_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13_diffuse, width = 4, height = 3)
+
+print(summary(r13c1_diffuse))
+posteriorPredictiveCheck_gg(r13c1_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13c1_diffuse, width = 4, height = 2)
+
+print(summary(r13c2_diffuse))
+posteriorPredictiveCheck_gg(r13c2_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13c2_diffuse, width = 4, height = 2)
+
+print(paste0("BF is ", BF_1313c1))
+if (BF_1313c1[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H3A")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H3A")
+}
+
+print(paste0("BF is ", BF_1313c2))
+if (BF_1313c2[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support H3B")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support H3B")
+}
+```
+
+```{r}
+### Random Intercept and slope
+r13_diffuse_rs <- run_beta_regression(DQ_C_o ~ urns_trans + colours_trans + seqBall_trans + (1 + urns_trans + colours_trans + seqBall_trans | participantID), makePrior(randomSlope = T), "r13_diffuse_rs")
+
+r13c1_diffuse_rs <- run_beta_regression(DQ_C_o ~ colours_trans + seqBall_trans + (1 + colours_trans + seqBall_trans| participantID), makePrior(randomSlope = T), "r13c1_diffuse_rs")
+
+r13c2_diffuse_rs <- run_beta_regression(DQ_C_o ~ urns_trans + seqBall_trans + (1 + urns_trans + seqBall_trans| participantID), makePrior(randomSlope = T), "r13c2_diffuse_rs")
+
+BF_1313c1_rs <- calculate_bayes_factor(r13_diffuse_rs, r13c1_diffuse_rs)
+BF_1313c2_rs <- calculate_bayes_factor(r13_diffuse_rs, r13c2_diffuse_rs)
+```
+
+```{r}
+print(summary(r13_diffuse_rs))
+posteriorPredictiveCheck_gg(r13_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13_diffuse_rs, width = 4, height = 3)
+
+print(summary(r13c1_diffuse_rs))
+posteriorPredictiveCheck_gg(r13c1_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13c1_diffuse_rs, width = 4, height = 2)
+
+print(summary(r13c2_diffuse_rs))
+posteriorPredictiveCheck_gg(r13c2_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r13c2_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_1313c1_rs))
+if (BF_1313c1_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H3A")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H3A")
+}
+
+print(paste0("BF is ", BF_1313c2_rs))
+if (BF_1313c2_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support H3B")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support H3B")
+}
+```
+
+## R14 - HSI Time Vs Step-wise CC
+
+```{r}
+### Random Intercept Only
+# Ignore the function name, it is actually running Bayesian Gamma Regression here
+r14_diffuse <- run_beta_regression(responseTimeUrn ~ CC_u + (1 | participantID), makePrior(family = "gamma"), "r14_diffuse", family = "Gamma")
+
+r14c_diffuse <- run_beta_regression(responseTimeUrn ~  (1 | participantID), makePrior(family = "gamma", interceptOnly = T), "r14c_diffuse", family = "Gamma")
+
+BF_1414c <- calculate_bayes_factor(r14_diffuse, r14c_diffuse)
+```
+
+```{r}
+print(summary(r14_diffuse))
+posteriorPredictiveCheck_gg(r14_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r14_diffuse, width = 4, height = 2)
+
+print(summary(r14c_diffuse))
+posteriorPredictiveCheck_gg(r14c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_1414c))
+if (BF_1414c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support RT change with CC_u")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support RT change with CC_u")
+}
+```
+
+```{r}
+### Random Intercept and slope
+# Ignore the function name, it is actually running Bayesian Gamma Regression here
+r14_diffuse_rs <- run_beta_regression(responseTimeUrn ~ CC_u + (1 + CC_u| participantID), makePrior(randomSlope = T,family = "gamma"), "r14_diffuse_rs", family = "Gamma")
+# Note r14c_diffuse_rs is the same as r14c_diffuse
+BF_1414c_rs <- calculate_bayes_factor(r14_diffuse_rs, r14c_diffuse)
+```
+
+```{r}
+print(summary(r14_diffuse_rs))
+posteriorPredictiveCheck_gg(r14_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r14_diffuse_rs, width = 4, height = 2)
+
+# Note r14c_diffuse_rs is the same as r14c_diffuse
+print(paste0("BF is ", BF_1414c_rs))
+if (BF_1414c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support RT change with CC_u")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support RT change with CC_u")
+}
+```
+
+## R15 - FF Time Vs Step-wise CC
+
+```{r}
+### Random Intercept Only
+# Ignore the function name, it is actually running Bayesian Gamma Regression here
+r15_diffuse <- run_beta_regression(responseTimeColour ~ CC_c + (1 | participantID), makePrior(family = "gamma"), "r15_diffuse", family = "Gamma")
+
+r15c_diffuse <- run_beta_regression(responseTimeColour ~ (1 | participantID), makePrior(family = "gamma", interceptOnly = T), "r15c_diffuse", family = "Gamma")
+
+BF_1515c <- calculate_bayes_factor(r15_diffuse, r15c_diffuse)
+```
+
+```{r}
+print(summary(r15_diffuse))
+posteriorPredictiveCheck_gg(r15_diffuse, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r15_diffuse, width = 4, height = 2)
+
+print(summary(r15c_diffuse))
+posteriorPredictiveCheck_gg(r15c_diffuse, width = 4, height = 2, bins=10)
+
+print(paste0("BF is ", BF_1515c))
+if (BF_1515c[1] > 3) {
+  print("Random Intercept Model(Diffuse Prior) Support RT change with CC_c")
+} else {
+  print("Random Intercept Model(Diffuse Prior) Does not Support RT change with CC_c")
+}
+```
+
+```{r}
+### Random Intercept and slope
+# Ignore the function name, it is actually running Bayesian Gamma Regression here
+r15_diffuse_rs <- run_beta_regression(responseTimeColour ~ CC_c + (1 + CC_c| participantID), makePrior(randomSlope = T, family = "gamma"), "r15_diffuse_rs", family = "Gamma")
+# Note r15c_diffuse_rs is the same as r15c_diffuse
+BF_1515c_rs <- calculate_bayes_factor(r15_diffuse_rs, r15c_diffuse)
+```
+
+```{r}
+print(summary(r15_diffuse_rs))
+posteriorPredictiveCheck_gg(r15_diffuse_rs, width = 4, height = 2, bins=10)
+plotPosteriorPredictors_ggplot(r15_diffuse_rs, width = 4, height = 2)
+
+print(paste0("BF is ", BF_1515c_rs))
+if (BF_1515c_rs[1] > 3) {
+  print("Random Slope + Intercept Model(Diffuse Prior) Support RT change with CC_c")
+} else {
+  print("Random Slope + Intercept Model(Diffuse Prior) Does not Support RT change with CC_c")
+}
+```
+
+## R16 & R16c - HSI Use Bayes Rule Vs Overall DQ
+
+## R17 & R17c - FF Use Bayes Rule Vs Overall DQ
+
+## R18 & R18c - HSI Male Vs Overall DQ
+
+## R19 & R19c - FF Male Vs Overall DQ
+
+# Model Comparison
+
+## Load all models
+
+```{r}
+models = load_all_brms_models()
+```
+
+We pre-registered both intercept-only random-effects models and intercept-plus-random-slope models for each Bayesian regression. When the more complex model achieved satisfactory convergence ($\hat{R} \approx 1$, $ESS > 4{,}000$), we conducted model selection based on the Bayes factor (BF). Specifically, placing the intercept-plus-slope model in the numerator, the more complex model was preferred if $BF > 3$; otherwise, the simpler intercept-only model was selected.
+
+```{r}
+winning_models <- compare_models(models)
+```
+
+## Save the Winning models
+
+```{r}
+saveRDS(winning_models, file = "models/winning_models.rds")
+```
+
+# Produce Tables
+
+## Table Directory
+
+### Table 1: $DQ_s^{HSI}$ H2, H2A, H2B, H2C
+
+```{r}
+# H2C, H2, H2A, H2B
+# models <- list(
+#   winning_models$r3_diffuse,
+#   winning_models$r4_diffuse,
+#   # winning_models$r9_diffuse,
+#   # winning_models$r9c_diffuse,
+#   # winning_models$r12c1_diffuse_rs,
+#   # winning_models$r12c2_diffuse_rs,
+#   # winning_models$r12_diffuse
+# )
+
+models <- list(
+  # H2
+  winning_models$r9c_diffuse,
+  winning_models$r9_diffuse,
+  # H2A, H2B
+  winning_models$r12c1_diffuse_rs,
+  winning_models$r12c2_diffuse_rs,
+  winning_models$r12_diffuse,
+  # H2C
+  winning_models$r4_diffuse,
+  winning_models$r3_diffuse
+)
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "NO", "YES", "YES", "NO", "NO", "NO"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $DQ_s^{HSI}$"),
+  group_counts = c(7),
+  file         = "tables/DQ_s_HSI.tex"
+)
+```
+
+### Table 2: $DQ_s^{FF}$ H4, H4A
+
+```{r}
+# H4A, H4
+# models <- list(
+#   winning_models$r5_diffuse,
+#   winning_models$r6_diffuse,
+#   # winning_models$r10c_diffuse,
+#   # winning_models$r10_diffuse_rs
+# )
+
+models <- list(
+  # H4
+  winning_models$r10c_diffuse,
+  winning_models$r10_diffuse_rs,
+  # H4A
+  # winning_models$r6_diffuse, # This is the same with r10c_diffuse
+  winning_models$r5_diffuse
+)  
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "YES", "NO"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $DQ_s^{FF}$"),
+  group_counts = c(3),
+  file         = "tables/DQ_s_FF.tex"
+)
+```
+
+### Table 3: $DQ_o^{HSI}$ H1, H1A, H1B
+
+```{r}
+# # H1B, H1
+# models <- list(
+#   winning_models$r1_diffuse,
+#   winning_models$r2_diffuse,
+#   winning_models$r7_diffuse,
+#   winning_models$r7c_diffuse
+# )
+
+models <- list(
+  # H1
+  winning_models$r7c_diffuse,
+  winning_models$r7_diffuse,
+  # H1A
+  winning_models$r11c_diffuse,
+  # winning_models$r11_diffuse, # This model is the same with r1_diffuse
+  # H1B
+  winning_models$r2_diffuse,  
+  winning_models$r1_diffuse
+)
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "NO", "NO","NO", "NO"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $DQ_o^{HSI}$"),
+  group_counts = c(5),
+  file         = "tables/DQ_o_HSI.tex"
+)
+```
+
+### Table 4: $DQ_o^{FF}$ H3, H3A, H3B
+
+```{r}
+# models <- list(
+#   winning_models$r8_diffuse_rs,
+#   winning_models$r8c_diffuse,
+#   winning_models$r13c1_diffuse,
+#   winning_models$r13c2_diffuse_rs,
+#   winning_models$r13_diffuse
+# )
+
+models <- list(
+  # H3
+  winning_models$r8c_diffuse,
+  winning_models$r8_diffuse_rs,
+  # H3A, H3B
+  winning_models$r13c1_diffuse,
+  winning_models$r13c2_diffuse_rs,
+  winning_models$r13_diffuse  
+)
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "YES", "NO", "YES", "NO"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $DQ_o^{FF}$"),
+  group_counts = c(5),
+  file         = "tables/DQ_o_FF.tex"
+)
+```
+
+### Table 5: $RT^{HSI}$
+
+```{r}
+models <- list(
+  winning_models$r14c_diffuse,
+  winning_models$r14_diffuse
+)
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "NO"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $RT^{HSI}$"),
+  group_counts = c(2),
+  file         = "tables/RT_HSI.tex"
+)
+```
+
+### Table 6: $RT^{FF}$
+
+```{r}
+models <- list(
+  winning_models$r15c_diffuse,
+  winning_models$r15_diffuse_rs
+)
+
+kbl <- make_kable_ci_stars(
+  models       = models,
+  slopeOrNotLis = list("NO", "YES"),
+  name_map     = nameList,
+  group_labels = c("Dependent variable: $RT^{FF}$"),
+  group_counts = c(2),
+  file         = "tables/RT_FF.tex"
+)
+```
